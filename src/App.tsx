@@ -45,7 +45,7 @@ const App = () => {
   };
 
   return (
-    <div className="App">
+    <div className="App flex flex-col items-center justify-center">
       <Upload {...props}>
         <Flex gap="small" wrap>
           <Button icon={<UploadOutlined />}>Select File</Button>
