@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Upload, UploadFile, UploadProps } from "antd";
+import { Button, Flex, Upload, UploadFile, UploadProps } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import Papa from "papaparse";
 
@@ -24,6 +24,7 @@ const App = () => {
       return false;
     },
     fileList,
+    disabled: fileList.length === 1,
   };
 
   const handleUpload = () => {
@@ -38,10 +39,20 @@ const App = () => {
     });
   };
 
+  const handleRemove = () => {
+    console.log("Remove File");
+    setFileList([]);
+  };
+
   return (
     <div className="App">
       <Upload {...props}>
-        <Button icon={<UploadOutlined />}>Upload</Button>
+        <Flex gap="small" wrap>
+          <Button icon={<UploadOutlined />}>Select File</Button>
+          <Button danger disabled={fileList.length < 1} onClick={handleRemove}>
+            Remove File
+          </Button>
+        </Flex>
       </Upload>
       <Button
         type="primary"
