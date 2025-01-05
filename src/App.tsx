@@ -7,8 +7,15 @@ import useExcelMappingScreens from "./hooks/useExcelMappingScreens";
 import { ExcelMappingScreens } from "./types";
 
 const App = () => {
-  const { rawFile, setRawFile, handleUpload, currentScreen } =
-    useExcelMappingScreens();
+  const {
+    rawFile,
+    setRawFile,
+    handleUpload,
+    currentScreen,
+    headers,
+    setMappedHeaders,
+    isHeaderMappingNextButtonDisabled,
+  } = useExcelMappingScreens();
 
   const screens = {
     [ExcelMappingScreens.UPLOAD_FILE]: {
@@ -24,12 +31,18 @@ const App = () => {
     },
     [ExcelMappingScreens.HEADER_MAPPING]: {
       title: "Header Mapping",
-      mainContent: <HeaderMappingScreen />,
+      mainContent: (
+        <HeaderMappingScreen
+          headers={headers}
+          setMappedHeaders={setMappedHeaders}
+        />
+      ),
       nextLabel: "Next",
       nextButtonProps: {
         onClick: () => {
           console.log("Next");
         },
+        disabled: isHeaderMappingNextButtonDisabled,
       },
       previousLabel: "Previous",
       previousButtonProps: {

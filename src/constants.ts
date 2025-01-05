@@ -5,7 +5,9 @@ export const TEMPLATE_COLUMNS = [
   "Title",
   "Note",
   "Account",
-];
+] as const;
+
+export const REQUIRED_TEMPLATE_COLUMNS = ["Date", "Amount", "Title"];
 
 export const CATEGORY_LIST = [
   "Groceries",
