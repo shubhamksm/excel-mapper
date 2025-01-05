@@ -1,8 +1,12 @@
 import { useState } from "react";
 import Papa from "papaparse";
 import { UploadFile } from "antd";
+import { ExcelMappingScreens } from "../types";
 
 const useExcelMappingScreens = () => {
+  const [currentScreen, setCurrentScreen] = useState<ExcelMappingScreens>(
+    ExcelMappingScreens.UPLOAD_FILE
+  );
   const [rawFile, setRawFile] = useState<UploadFile>();
   const [parsedFile, setParsedFile] = useState<unknown[]>();
 
@@ -13,6 +17,7 @@ const useExcelMappingScreens = () => {
         const data = results.data;
         setParsedFile(data);
         console.log(data);
+        setCurrentScreen(ExcelMappingScreens.HEADER_MAPPING);
       },
     });
   };
@@ -21,6 +26,7 @@ const useExcelMappingScreens = () => {
     rawFile,
     setRawFile,
     handleUpload,
+    currentScreen,
   };
 };
 
