@@ -21,23 +21,22 @@ const App = () => {
   };
 
   return (
-    <div className="h-96 flex items-center justify-center">
-      <Page
-        title="Upload File"
-        content={
-          <UploadNewFile
-            fileList={fileList}
-            setFileList={setFileList}
-            handleNextClick={handleUpload}
-            uploading={uploading}
-          />
-        }
-        type="primary"
-        nextLabel="Next"
-        disabled={fileList.length === 0}
-        loading={uploading}
-        handleNextClick={handleUpload}
-      />
+    <div className="h-screen w-screen bg-slate-500 flex items-center justify-center">
+      <div className="p-4 h-2/3 w-2/3 bg-slate-50 rounded-md">
+        <Page
+          title="Upload File"
+          mainContent={
+            <UploadNewFile
+              fileList={fileList}
+              setFileList={setFileList}
+              handleNextClick={handleUpload}
+              uploading={uploading}
+            />
+          }
+          nextLabel="Next"
+          previousLabel="Previous"
+        />
+      </div>
     </div>
   );
 };

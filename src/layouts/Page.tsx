@@ -1,56 +1,43 @@
-import { Button, Flex } from "antd";
+import { Button, ButtonProps } from "antd";
+
+type PageControlButtonProps = Omit<
+  ButtonProps & React.RefAttributes<HTMLButtonElement>,
+  "style"
+>;
 
 export type PageProps = {
   title: string;
-  content: JSX.Element;
+  mainContent: JSX.Element;
   previousLabel?: string;
   nextLabel?: string;
-  handlePreviousClick?: () => void;
-  handleNextClick?: () => void;
-  type?: "default" | "link" | "text" | "primary" | "dashed";
-  disabled?: boolean;
-  loading?: boolean;
+  nextButtonProps?: PageControlButtonProps;
+  previousButtonProps?: PageControlButtonProps;
 };
 
 const Page = ({
   title,
-  content,
-  previousLabel,
+  mainContent,
   nextLabel,
-  handleNextClick,
-  handlePreviousClick,
-  type,
-  disabled,
-  loading,
+  nextButtonProps,
+  previousLabel,
+  previousButtonProps,
 }: PageProps) => {
   return (
-    <div className="flex flex-col space-y-4">
-      <h1 className="mx-20 text-lg">{title}</h1>
-      {content}
-      <Flex gap="small" wrap>
+    <div className="w-full h-full flex flex-col items-center gap-y-4">
+      <h1 className="text-2xl">{title}</h1>
+      <div className="flex-grow">{mainContent}</div>
+      <div className="w-full">
         {previousLabel && (
-          <Button
-            style={{ marginRight: "auto" }}
-            type={type}
-            onClick={handlePreviousClick}
-            disabled={disabled}
-            loading={loading}
-          >
+          <Button style={{ float: "left" }} {...previousButtonProps}>
             {previousLabel}
           </Button>
         )}
         {nextLabel && (
-          <Button
-            style={{ marginLeft: "auto" }}
-            type={type}
-            onClick={handleNextClick}
-            disabled={disabled}
-            loading={loading}
-          >
+          <Button style={{ float: "right" }} {...nextButtonProps}>
             {nextLabel}
           </Button>
         )}
-      </Flex>
+      </div>
     </div>
   );
 };
