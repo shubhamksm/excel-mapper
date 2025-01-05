@@ -1,4 +1,4 @@
-import { Button } from "antd";
+import { Button, Flex } from "antd";
 
 export type PageProps = {
   title: string;
@@ -7,17 +7,50 @@ export type PageProps = {
   nextLabel?: string;
   handlePreviousClick?: () => void;
   handleNextClick?: () => void;
+  type?: "default" | "link" | "text" | "primary" | "dashed";
+  disabled?: boolean;
+  loading?: boolean;
 };
 
-const Page = ({ title, content, previousLabel, nextLabel }: PageProps) => {
+const Page = ({
+  title,
+  content,
+  previousLabel,
+  nextLabel,
+  handleNextClick,
+  handlePreviousClick,
+  type,
+  disabled,
+  loading,
+}: PageProps) => {
   return (
-    <div>
-      <h1>{title}</h1>
+    <div className="flex flex-col space-y-4">
+      <h1 className="mx-20 text-lg">{title}</h1>
       {content}
-      <div className="flex space-between">
-        {previousLabel && <Button type="primary">{previousLabel}</Button>}
-        {nextLabel && <Button type="primary">{nextLabel}</Button>}
-      </div>
+      <Flex gap="small" wrap>
+        {previousLabel && (
+          <Button
+            style={{ marginRight: "auto" }}
+            type={type}
+            onClick={handlePreviousClick}
+            disabled={disabled}
+            loading={loading}
+          >
+            {previousLabel}
+          </Button>
+        )}
+        {nextLabel && (
+          <Button
+            style={{ marginLeft: "auto" }}
+            type={type}
+            onClick={handleNextClick}
+            disabled={disabled}
+            loading={loading}
+          >
+            {nextLabel}
+          </Button>
+        )}
+      </Flex>
     </div>
   );
 };

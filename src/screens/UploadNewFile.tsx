@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Button, Flex, Upload, UploadProps, UploadFile } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import Papa from "papaparse";
 
 type UploadNewFileProps = {
   fileList: UploadFile[];
   setFileList: React.Dispatch<React.SetStateAction<UploadFile[]>>;
+  handleNextClick: () => void;
+  uploading: boolean;
 };
 export const UploadNewFile = ({
   fileList,
   setFileList,
 }: UploadNewFileProps) => {
-  const [uploading, setUploading] = useState(false);
-
   useEffect(() => {
     console.log(fileList);
   }, [fileList]);
@@ -26,23 +25,10 @@ export const UploadNewFile = ({
     },
     beforeUpload: (file) => {
       setFileList([...fileList, file]);
-
       return false;
     },
     fileList,
     disabled: fileList.length === 1,
-  };
-
-  const handleUpload = () => {
-    setUploading(true);
-    Papa.parse(fileList[0] as unknown as File, {
-      header: true,
-      complete: (results) => {
-        const data = results.data;
-        console.log(data);
-        setUploading(false);
-      },
-    });
   };
 
   const handleRemove = () => {
@@ -53,22 +39,22 @@ export const UploadNewFile = ({
   return (
     <div>
       <Upload {...props}>
-        <Flex gap="small" wrap>
+        <Flex gap="large" wrap>
           <Button icon={<UploadOutlined />}>Select File</Button>
           <Button danger disabled={fileList.length < 1} onClick={handleRemove}>
             Remove File
           </Button>
         </Flex>
       </Upload>
-      <Button
+      {/* <Button
         type="primary"
-        onClick={handleUpload}
+        onClick={handleNextClick}
         disabled={fileList.length === 0}
         loading={uploading}
         style={{ marginTop: 16 }}
       >
         {uploading ? "Uploading" : "Start Upload"}
-      </Button>
+      </Button> */}
     </div>
   );
 };
