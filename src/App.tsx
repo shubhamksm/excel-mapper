@@ -8,7 +8,7 @@ const App = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   return (
-    <div className="App flex flex-col items-center justify-center">
+    <div className="h-96 flex items-center justify-center">
       <Page
         title="Upload File"
         content={
