@@ -34,7 +34,6 @@ const App = () => {
             />
           }
           nextLabel="Next"
-          previousLabel="Previous"
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Button, Flex, Upload, UploadProps, UploadFile } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
@@ -12,10 +12,6 @@ export const UploadNewFile = ({
   fileList,
   setFileList,
 }: UploadNewFileProps) => {
-  useEffect(() => {
-    console.log(fileList);
-  }, [fileList]);
-
   const props: UploadProps = {
     onRemove: (file) => {
       const index = fileList.indexOf(file);
@@ -32,7 +28,6 @@ export const UploadNewFile = ({
   };
 
   const handleRemove = () => {
-    console.log("Remove File");
     setFileList([]);
   };
 
