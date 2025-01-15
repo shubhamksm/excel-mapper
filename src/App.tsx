@@ -15,6 +15,8 @@ const App = () => {
     headers,
     setMappedHeaders,
     isHeaderMappingNextButtonDisabled,
+    handleHeadersMappingNext,
+    handleHeadersMappingPrevious,
   } = useExcelMappingScreens();
 
   const screens = {
@@ -39,16 +41,12 @@ const App = () => {
       ),
       nextLabel: "Next",
       nextButtonProps: {
-        onClick: () => {
-          console.log("Next");
-        },
+        onClick: handleHeadersMappingNext,
         disabled: isHeaderMappingNextButtonDisabled,
       },
       previousLabel: "Previous",
       previousButtonProps: {
-        onClick: () => {
-          console.log("Previous");
-        },
+        onClick: handleHeadersMappingPrevious,
       },
     },
     [ExcelMappingScreens.TITLE_MAPPING]: {
