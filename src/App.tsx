@@ -5,6 +5,10 @@ import { TitleMappingScreen } from "./screens/TitleMappingScreen";
 import Page from "./layouts/Page";
 import useExcelMappingScreens from "./hooks/useExcelMappingScreens";
 import { ExcelMappingScreens } from "./types";
+import { useState, useEffect } from "react";
+import { Button } from "antd";
+import { initClient, signIn } from "./services/auth";
+import { createFolder, getFolderByName } from "./services/drive";
 
 const App = () => {
   const {
@@ -67,10 +71,44 @@ const App = () => {
     },
   };
 
+  const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
+  const [appFolderId, setAppFolderId] = useState<string | undefined>();
+
+  useEffect(() => {
+    gapi.load("client:auth2", () =>
+      initClient({
+        updateLoggedInStatus: (status) => {
+          updateIsLoggedIn(status);
+        },
+      })
+    );
+  }, []);
+
+  useEffect(() => {
+    const checkFolderPresent = async () => {
+      const folderId = await getFolderByName();
+      if (!folderId) {
+        const newFolderId = await createFolder();
+        setAppFolderId(newFolderId);
+      } else {
+        setAppFolderId(folderId);
+      }
+    };
+    if (isLoggedIn) {
+      checkFolderPresent();
+    }
+  }, [isLoggedIn]);
+
   return (
     <div className="h-screen w-screen bg-slate-500 flex items-center justify-center">
       <div className="p-4 h-2/3 w-2/3 bg-slate-50 rounded-md">
-        <Page {...screens[currentScreen]} />
+        {!isLoggedIn ? (
+          <div className="w-full h-full flex flex-col justify-center items-center gap-y-4">
+            <Button onClick={() => signIn(updateIsLoggedIn)}>Login</Button>
+          </div>
+        ) : (
+          <Page {...screens[currentScreen]} />
+        )}
       </div>
     </div>
   );
