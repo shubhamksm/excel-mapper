@@ -1,5 +1,5 @@
-import { Headers, MappedHeaders, StateAction, Template_Columns } from "@/types";
-import { TEMPLATE_COLUMNS } from "@/constants";
+import { ExcelMappingScreens, Template_Columns } from "@/types";
+import { REQUIRED_TEMPLATE_COLUMNS, TEMPLATE_COLUMNS } from "@/constants";
 import {
   Select,
   SelectContent,
@@ -7,11 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-type HeaderMappingScreenProps = {
-  headers: Headers;
-  setMappedHeaders: StateAction<MappedHeaders>;
-};
+import Page from "@/layouts/Page";
+import { useBoundStore } from "@/store/useBoundStore";
+import { extractHeaders, mapRowWithHeaders } from "@/utils";
+import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 const OptionsFromTemplateColumns = TEMPLATE_COLUMNS.map((column) => {
   return (
@@ -21,41 +21,90 @@ const OptionsFromTemplateColumns = TEMPLATE_COLUMNS.map((column) => {
   );
 });
 
-export const HeaderMappingScreen = ({
-  headers,
-  setMappedHeaders,
-}: HeaderMappingScreenProps) => {
+export const HeaderMappingScreen = () => {
+  const [mappedHeaders, setMappedHeaders] = useBoundStore(
+    useShallow((state) => [state.mappedHeaders, state.setMappedHeaders])
+  );
+  const parsedFile = useBoundStore(useShallow((state) => state.parsedFile));
+  const changeCurrentScreen = useBoundStore(
+    useShallow((state) => state.changeCurrentScreen)
+  );
+  const headers = useMemo(() => {
+    if (parsedFile) {
+      return extractHeaders(parsedFile[0]);
+    }
+    return [];
+  }, []);
+  const isHeaderMappingNextButtonDisabled = useMemo(() => {
+    return (
+      Object.values(mappedHeaders).filter((val) =>
+        REQUIRED_TEMPLATE_COLUMNS.includes(val)
+      ).length < REQUIRED_TEMPLATE_COLUMNS.length
+    );
+  }, [mappedHeaders]);
+
   const handleChange = (header: string, value: Template_Columns) => {
-    setMappedHeaders((prev) => {
-      return {
-        ...prev,
-        [header]: value,
-      };
-    });
+    setMappedHeaders({ [header]: value });
+  };
+
+  const handleHeadersMappingNext = () => {
+    if (!parsedFile) {
+      throw new Error("No file uploaded");
+    }
+    const mappedData = mapRowWithHeaders(parsedFile, mappedHeaders);
+    //[TODO] need to handle mapped data and titleList for next screen
+    // setMappedData(mappedData);
+    const titleList: Record<string, number> = {};
+    for (const row of mappedData) {
+      if (titleList[row.Title]) {
+        titleList[row.Title] += 1;
+      } else {
+        titleList[row.Title] = 1;
+      }
+    }
+    console.log(titleList);
+    changeCurrentScreen(ExcelMappingScreens.TITLE_MAPPING);
+  };
+
+  const handleHeadersMappingPrevious = () => {
+    changeCurrentScreen(ExcelMappingScreens.UPLOAD_FILE);
   };
 
   return (
-    <div className="flex w-2/3 mx-auto flex-col gap-y-4">
-      {headers.map((header) => {
-        return (
-          <div
-            className="flex justify-between items-center gap-x-4"
-            key={header}
-          >
-            <h3>{header}</h3>
-            <Select
-              onValueChange={(value) =>
-                handleChange(header, value as Template_Columns)
-              }
+    <Page
+      title="Header Mapping"
+      nextLabel="Next"
+      nextButtonProps={{
+        onClick: handleHeadersMappingNext,
+        disabled: isHeaderMappingNextButtonDisabled,
+      }}
+      previousLabel="Previous"
+      previousButtonProps={{
+        onClick: handleHeadersMappingPrevious,
+      }}
+    >
+      <div className="flex w-2/3 mx-auto flex-col gap-y-4">
+        {headers.map((header) => {
+          return (
+            <div
+              className="flex justify-between items-center gap-x-4"
+              key={header}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Add Mapping" />
-              </SelectTrigger>
-              <SelectContent>{OptionsFromTemplateColumns}</SelectContent>
-            </Select>
-          </div>
-        );
-      })}
-    </div>
+              <h3>{header}</h3>
+              <Select
+                onValueChange={(value) =>
+                  handleChange(header, value as Template_Columns)
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Add Mapping" />
+                </SelectTrigger>
+                <SelectContent>{OptionsFromTemplateColumns}</SelectContent>
+              </Select>
+            </div>
+          );
+        })}
+      </div>
+    </Page>
   );
 };

@@ -2,77 +2,33 @@ import { UploadFileScreen } from "@/screens/UploadFileScreen";
 import { HeaderMappingScreen } from "@/screens/HeaderMappingScreen";
 import { TitleMappingScreen } from "@/screens/TitleMappingScreen";
 
-import Page from "@/layouts/Page";
-import useExcelMappingScreens from "@/hooks/useExcelMappingScreens";
-import { ExcelMappingScreens } from "@/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { initClient, signIn } from "@/services/auth";
 import { createFolder, getFolderByName } from "@/services/drive";
 import { Button } from "@/components/ui/button";
+import { useBoundStore } from "./store/useBoundStore";
+import { ExcelMappingScreens } from "./types";
+import { useShallow } from "zustand/react/shallow";
 
 const App = () => {
-  const {
-    rawFile,
-    setRawFile,
-    handleUpload,
-    currentScreen,
-    headers,
-    setMappedHeaders,
-    isHeaderMappingNextButtonDisabled,
-    handleHeadersMappingNext,
-    handleHeadersMappingPrevious,
-  } = useExcelMappingScreens();
-
-  const screens = {
-    [ExcelMappingScreens.UPLOAD_FILE]: {
-      title: "Upload File",
-      mainContent: <UploadFileScreen file={rawFile} setFile={setRawFile} />,
-      nextLabel: "Next",
-      nextButtonProps: {
-        onClick: () => {
-          handleUpload();
-        },
-        disabled: !rawFile,
-      },
-    },
-    [ExcelMappingScreens.HEADER_MAPPING]: {
-      title: "Header Mapping",
-      mainContent: (
-        <HeaderMappingScreen
-          headers={headers}
-          setMappedHeaders={setMappedHeaders}
-        />
-      ),
-      nextLabel: "Next",
-      nextButtonProps: {
-        onClick: handleHeadersMappingNext,
-        disabled: isHeaderMappingNextButtonDisabled,
-      },
-      previousLabel: "Previous",
-      previousButtonProps: {
-        onClick: handleHeadersMappingPrevious,
-      },
-    },
-    [ExcelMappingScreens.TITLE_MAPPING]: {
-      title: "Title Mapping",
-      mainContent: <TitleMappingScreen />,
-      nextLabel: "Next",
-      nextButtonProps: {
-        onClick: () => {
-          console.log("Next");
-        },
-      },
-      previousLabel: "Previous",
-      previousButtonProps: {
-        onClick: () => {
-          console.log("Previous");
-        },
-      },
-    },
-  };
-
+  const currentScreen = useBoundStore(
+    useShallow((state) => state.currentScreen)
+  );
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
   const [appFolderId, setAppFolderId] = useState<string | undefined>();
+
+  const getCurrentScreen = useCallback(() => {
+    switch (currentScreen) {
+      case ExcelMappingScreens.UPLOAD_FILE:
+        return <UploadFileScreen />;
+      case ExcelMappingScreens.HEADER_MAPPING:
+        return <HeaderMappingScreen />;
+      case ExcelMappingScreens.TITLE_MAPPING:
+        return <TitleMappingScreen />;
+      default:
+        return <UploadFileScreen />;
+    }
+  }, [currentScreen]);
 
   useEffect(() => {
     gapi.load("client:auth2", () =>
@@ -107,7 +63,7 @@ const App = () => {
             <Button onClick={() => signIn(updateIsLoggedIn)}>Login</Button>
           </div>
         ) : (
-          <Page {...screens[currentScreen]} />
+          getCurrentScreen()
         )}
       </div>
     </div>

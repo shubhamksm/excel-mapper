@@ -1,6 +1,12 @@
-import { CSV_Data, CSV_Record, Generic_CSV_Data, MappedHeaders } from "./types";
+import {
+  CSV_Data,
+  CSV_Record,
+  Generic_CSV_Data,
+  Headers,
+  MappedHeaders,
+} from "./types";
 
-export const extractHeaders = (obj: Record<string, unknown>) => {
+export const extractHeaders = (obj: Record<string, unknown>): Headers => {
   return [
     ...new Set(
       Object.keys(obj).filter((key) => typeof obj[key] === "string" && key)

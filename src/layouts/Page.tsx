@@ -4,25 +4,25 @@ type PageControlButtonProps = Omit<ButtonProps, "style">;
 
 export type PageProps = {
   title: string;
-  mainContent: JSX.Element;
   previousLabel?: string;
   nextLabel?: string;
   nextButtonProps?: PageControlButtonProps;
   previousButtonProps?: PageControlButtonProps;
+  children: JSX.Element;
 };
 
 const Page = ({
   title,
-  mainContent,
   nextLabel,
   nextButtonProps,
   previousLabel,
   previousButtonProps,
+  children,
 }: PageProps) => {
   return (
     <div className="w-full h-full flex flex-col items-center gap-y-4">
       <h1 className="text-2xl">{title}</h1>
-      <div className="flex-grow h-full w-full overflow-auto">{mainContent}</div>
+      <div className="flex-grow h-full w-full overflow-auto">{children}</div>
       <div className="w-full">
         {previousLabel && (
           <Button style={{ float: "left" }} {...previousButtonProps}>
