@@ -1,14 +1,14 @@
-import { UploadFileScreen } from "./screens/UploadFileScreen";
-import { HeaderMappingScreen } from "./screens/HeaderMappingScreen";
-import { TitleMappingScreen } from "./screens/TitleMappingScreen";
+import { UploadFileScreen } from "@/screens/UploadFileScreen";
+import { HeaderMappingScreen } from "@/screens/HeaderMappingScreen";
+import { TitleMappingScreen } from "@/screens/TitleMappingScreen";
 
-import Page from "./layouts/Page";
-import useExcelMappingScreens from "./hooks/useExcelMappingScreens";
-import { ExcelMappingScreens } from "./types";
+import Page from "@/layouts/Page";
+import useExcelMappingScreens from "@/hooks/useExcelMappingScreens";
+import { ExcelMappingScreens } from "@/types";
 import { useState, useEffect } from "react";
-import { Button } from "antd";
-import { initClient, signIn } from "./services/auth";
-import { createFolder, getFolderByName } from "./services/drive";
+import { initClient, signIn } from "@/services/auth";
+import { createFolder, getFolderByName } from "@/services/drive";
+import { Button } from "@/components/ui/button";
 
 const App = () => {
   const {

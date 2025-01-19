@@ -1,11 +1,12 @@
+import { Headers, MappedHeaders, StateAction, Template_Columns } from "@/types";
+import { TEMPLATE_COLUMNS } from "@/constants";
 import {
-  Headers,
-  MappedHeaders,
-  StateAction,
-  Template_Columns,
-} from "../types";
-import { Select } from "antd";
-import { TEMPLATE_COLUMNS } from "../constants";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type HeaderMappingScreenProps = {
   headers: Headers;
@@ -13,10 +14,11 @@ type HeaderMappingScreenProps = {
 };
 
 const OptionsFromTemplateColumns = TEMPLATE_COLUMNS.map((column) => {
-  return {
-    label: column,
-    value: column,
-  };
+  return (
+    <SelectItem key={column} value={column}>
+      {column}
+    </SelectItem>
+  );
 });
 
 export const HeaderMappingScreen = ({
@@ -33,7 +35,7 @@ export const HeaderMappingScreen = ({
   };
 
   return (
-    <div className="flex flex-col gap-y-4">
+    <div className="flex w-2/3 mx-auto flex-col gap-y-4">
       {headers.map((header) => {
         return (
           <div
@@ -42,12 +44,15 @@ export const HeaderMappingScreen = ({
           >
             <h3>{header}</h3>
             <Select
-              options={OptionsFromTemplateColumns}
-              onChange={(value) =>
+              onValueChange={(value) =>
                 handleChange(header, value as Template_Columns)
               }
-              style={{ minWidth: 120, width: "fit-content" }}
-            />
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Add Mapping" />
+              </SelectTrigger>
+              <SelectContent>{OptionsFromTemplateColumns}</SelectContent>
+            </Select>
           </div>
         );
       })}

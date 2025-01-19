@@ -1,9 +1,6 @@
-import { Button, ButtonProps } from "antd";
+import { Button, ButtonProps } from "@/components/ui/button";
 
-type PageControlButtonProps = Omit<
-  ButtonProps & React.RefAttributes<HTMLButtonElement>,
-  "style"
->;
+type PageControlButtonProps = Omit<ButtonProps, "style">;
 
 export type PageProps = {
   title: string;
@@ -25,7 +22,7 @@ const Page = ({
   return (
     <div className="w-full h-full flex flex-col items-center gap-y-4">
       <h1 className="text-2xl">{title}</h1>
-      <div className="flex-grow">{mainContent}</div>
+      <div className="flex-grow h-full w-full overflow-auto">{mainContent}</div>
       <div className="w-full">
         {previousLabel && (
           <Button style={{ float: "left" }} {...previousButtonProps}>
