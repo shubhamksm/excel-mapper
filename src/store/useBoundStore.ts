@@ -6,9 +6,9 @@ import {
 } from "./headerMappiingSlice";
 import { createFileUploadSlice, FileUploadSlice } from "./fileUploadSlice";
 
-export const useBoundStore = create<
-  ScreenSlice & FileUploadSlice & HeaderMappingSlice
->()((...a) => ({
+export type StoreState = ScreenSlice & FileUploadSlice & HeaderMappingSlice;
+
+export const useBoundStore = create<StoreState>()((...a) => ({
   ...createScreenSlice(...a),
   ...createFileUploadSlice(...a),
   ...createHeaderMappingSlice(...a),
