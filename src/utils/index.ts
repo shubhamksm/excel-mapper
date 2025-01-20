@@ -1,12 +1,15 @@
+import numeral from "numeral";
+
 import {
   CSV_Data,
   CSV_Record,
   Generic_CSV_Data,
+  Generic_CSV_Record,
   Headers,
   MappedHeaders,
-} from "./types";
+} from "../types";
 
-export const extractHeaders = (obj: Record<string, unknown>): Headers => {
+export const extractHeaders = (obj: Generic_CSV_Record): Headers => {
   return [
     ...new Set(
       Object.keys(obj).filter((key) => typeof obj[key] === "string" && key)
@@ -15,7 +18,7 @@ export const extractHeaders = (obj: Record<string, unknown>): Headers => {
 };
 
 export const checkIfRequiredColumnsExists = (
-  record: Record<string, unknown>,
+  record: Generic_CSV_Record,
   mappedHeaders: MappedHeaders
 ) => {
   return Object.keys(mappedHeaders).every((val) => val in record);
@@ -31,15 +34,13 @@ export const mapRowWithHeaders = (
       const mappedRow = {} as CSV_Record;
       for (const [header, mappingHeader] of Object.entries(mappedHeaders)) {
         if (mappingHeader === "Amount") {
-          const rawAmountValue = parseFloat(row[header].replace(",", "."));
-          const amountValue = isNaN(rawAmountValue) ? 0 : rawAmountValue;
+          const amountValue = numeral(row[header]).value() ?? 0;
           if (!mappedRow[mappingHeader]) {
             mappedRow[mappingHeader] = amountValue;
           } else if (typeof mappedRow[mappingHeader] === "number") {
             mappedRow[mappingHeader] += amountValue;
           }
-        }
-        if (!mappedRow[mappingHeader]) {
+        } else if (!mappedRow[mappingHeader]) {
           mappedRow[mappingHeader] = row[header];
         }
       }

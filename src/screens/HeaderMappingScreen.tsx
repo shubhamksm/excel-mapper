@@ -29,6 +29,9 @@ export const HeaderMappingScreen = () => {
   const changeCurrentScreen = useBoundStore(
     useShallow((state) => state.changeCurrentScreen)
   );
+  const setTitleMappedData = useBoundStore(
+    useShallow((state) => state.setTitleMappedData)
+  );
   const headers = useMemo(() => {
     if (parsedFile) {
       return extractHeaders(parsedFile[0]);
@@ -52,17 +55,7 @@ export const HeaderMappingScreen = () => {
       throw new Error("No file uploaded");
     }
     const mappedData = mapRowWithHeaders(parsedFile, mappedHeaders);
-    //[TODO] need to handle mapped data and titleList for next screen
-    // setMappedData(mappedData);
-    const titleList: Record<string, number> = {};
-    for (const row of mappedData) {
-      if (titleList[row.Title]) {
-        titleList[row.Title] += 1;
-      } else {
-        titleList[row.Title] = 1;
-      }
-    }
-    console.log(titleList);
+    setTitleMappedData(mappedData);
     changeCurrentScreen(ExcelMappingScreens.TITLE_MAPPING);
   };
 

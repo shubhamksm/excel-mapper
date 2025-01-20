@@ -1,4 +1,4 @@
-export const DEFAULT_FOLDER_NAME = "EXCEL_MAPPER";
+import { DEFAULT_FOLDER_NAME } from "@/constants";
 
 export const listFiles = async () => {
   try {
@@ -18,9 +18,7 @@ export const listFiles = async () => {
   }
 };
 
-export const getFolderByName = async (
-  folderName: string = DEFAULT_FOLDER_NAME
-) => {
+export const getFolderByName = async (folderName: string) => {
   try {
     const response = await gapi.client.drive.files.list({
       q: `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
@@ -38,9 +36,7 @@ export const getFolderByName = async (
   }
 };
 
-export const createFolder = async (
-  folderName: string = DEFAULT_FOLDER_NAME
-) => {
+export const createFolder = async (folderName: string) => {
   try {
     const metadata = {
       name: folderName,

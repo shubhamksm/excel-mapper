@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useBoundStore } from "./store/useBoundStore";
 import { ExcelMappingScreens } from "./types";
 import { useShallow } from "zustand/react/shallow";
+import { DEFAULT_FOLDER_NAME } from "./constants";
 
 const App = () => {
   const currentScreen = useBoundStore(
@@ -42,9 +43,9 @@ const App = () => {
 
   useEffect(() => {
     const checkFolderPresent = async () => {
-      const folderId = await getFolderByName();
+      const folderId = await getFolderByName(DEFAULT_FOLDER_NAME);
       if (!folderId) {
-        const newFolderId = await createFolder();
+        const newFolderId = await createFolder(DEFAULT_FOLDER_NAME);
         setAppFolderId(newFolderId);
       } else {
         setAppFolderId(folderId);

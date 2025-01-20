@@ -1,10 +1,12 @@
-import { TEMPLATE_COLUMNS } from "./constants";
+import { CATEGORY_LIST, TEMPLATE_COLUMNS } from "./constants";
 
 export type StateAction<T> = React.Dispatch<React.SetStateAction<T>>;
 
 export type Headers = string[];
 
 export type Template_Columns = (typeof TEMPLATE_COLUMNS)[number];
+
+export type Category_Type = (typeof CATEGORY_LIST)[number];
 
 export type MappedHeaders = Record<string, Template_Columns>;
 

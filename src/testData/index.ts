@@ -1,4 +1,11 @@
-export const parsedFile1 = [
+import {
+  Generic_CSV_Data,
+  Generic_CSV_Record,
+  Headers,
+  MappedHeaders,
+} from "@/types";
+
+export const parsedFile1: Generic_CSV_Data = [
   {
     Type: "TOPUP",
     Product: "Current",
@@ -48,3 +55,31 @@ export const parsedFile1 = [
     Balance: "1245.48",
   },
 ];
+
+export const genericCSVData1: Generic_CSV_Data = parsedFile1;
+
+export const genericCSVRecord1: Generic_CSV_Record = parsedFile1[0];
+
+export const correctlyExtractedHeaders1: Headers = [
+  "Type",
+  "Product",
+  "Started Date",
+  "Completed Date",
+  "Description",
+  "Amount",
+  "Fee",
+  "Currency",
+  "State",
+  "Balance",
+];
+
+export const fullyMappedHeaders1: MappedHeaders = {
+  ["Started Date"]: "Date",
+  ["Description"]: "Title",
+  ["Amount"]: "Amount",
+};
+
+export const partialMappedHeaders1: MappedHeaders = {
+  ["Started Date"]: "Date",
+  ["Description"]: "Title",
+};
