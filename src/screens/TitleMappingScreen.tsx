@@ -5,14 +5,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CATEGORY_LIST } from "@/constants";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CATEGORY_LIST, DEFAULT_TITLE_MAP_FILE } from "@/constants";
 import Page from "@/layouts/Page";
+import {
+  createJsonFile,
+  getJsonFileByName,
+  readJsonFileContent,
+  updateJsonFile,
+} from "@/services/drive";
 import { useBoundStore } from "@/store/useBoundStore";
 import { Category_Type } from "@/types";
-import { useMemo } from "react";
+import { mapRowWithCategory, updatePreMappedTitles } from "@/utils";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 
-type TitleRecords = Record<string, { category: Category_Type; count: number }>;
+export type TitleRecords = Record<
+  string,
+  { category: Category_Type; count: number }
+>;
+
+export type PreMappedTitles = Record<string, Category_Type>;
 
 const colors = [
   "border-red-200",
@@ -33,10 +46,48 @@ const OptionsFromDefaultCategory = CATEGORY_LIST.map((name) => {
   );
 });
 
+const getPreMappedTitles = async (
+  rootFolderId: string
+): Promise<
+  | {
+      fileId: string;
+      data: PreMappedTitles;
+    }
+  | undefined
+> => {
+  // check if json file already exists
+  const titleMapFileId = await getJsonFileByName(DEFAULT_TITLE_MAP_FILE);
+  // yes => read and return json and fileId
+  if (titleMapFileId) {
+    const titleMap =
+      (await readJsonFileContent<PreMappedTitles>(titleMapFileId)) ?? {};
+    return {
+      fileId: titleMapFileId,
+      data: titleMap,
+    };
+  }
+  // no => create and return empty json and fileId
+  const newTitleMapFileId = await createJsonFile(
+    DEFAULT_TITLE_MAP_FILE,
+    {},
+    rootFolderId
+  );
+  if (newTitleMapFileId) {
+    return {
+      fileId: newTitleMapFileId,
+      data: {},
+    };
+  }
+};
+
 export const TitleMappingScreen = () => {
   const titleMappedData = useBoundStore(
     useShallow((state) => state.titleMappedData)
   );
+  const rootFolderId = useBoundStore(useShallow((state) => state.rootFolderId));
+  const [preMappedTitles, setPreMappedTitles] = useState<PreMappedTitles>({});
+  const [preMappedTitlesFileId, setPreMappedTitlesFileId] = useState<string>();
+  const [isLoading, setIsLoading] = useState(true);
   const [titleRecords, titleSortedList] = useMemo<
     [TitleRecords, string[]]
   >(() => {
@@ -48,23 +99,69 @@ export const TitleMappingScreen = () => {
         } else {
           _titleRecords[row.Title] = {
             count: 1,
-            category: "Uncategorized",
+            category: preMappedTitles[row.Title] ?? "Uncategorized",
           };
         }
       }
-      console.log(_titleRecords);
       const titleSortedList = Object.keys(_titleRecords).sort(
         (a, b) => _titleRecords[b].count - _titleRecords[a].count
       );
-      console.log(titleSortedList);
       return [_titleRecords, titleSortedList];
     }
     return [{}, []];
+  }, [preMappedTitles, titleMappedData]);
+
+  const handleNext = async () => {
+    if (titleMappedData && preMappedTitlesFileId) {
+      const categoryMappedData = mapRowWithCategory(
+        titleMappedData,
+        titleRecords
+      );
+      const updatedPreMappedTitles = updatePreMappedTitles(titleRecords);
+      await updateJsonFile(preMappedTitlesFileId, updatedPreMappedTitles);
+      console.log("Output :: ", { categoryMappedData, updatedPreMappedTitles });
+      // [TODO] Assign data, distribute it into yearly, and upload in their respective csv file in the drive
+    }
+  };
+
+  useEffect(() => {
+    const prepareData = async () => {
+      if (rootFolderId) {
+        const response = await getPreMappedTitles(rootFolderId);
+        if (response) {
+          setPreMappedTitles(response.data);
+          setPreMappedTitlesFileId(response.fileId);
+          setIsLoading(false);
+        }
+      }
+    };
+    prepareData();
   }, []);
 
-  const handleNext = () => {
-    console.log("Finish :: ", { titleRecords, titleSortedList });
-  };
+  const renderContent = useMemo(() => {
+    return titleSortedList.map((title) => {
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      return (
+        <div
+          key={title}
+          className={`flex items-center justify-center rounded-lg border-2 ${randomColor} p-1.5 gap-1.5`}
+        >
+          <label>{`${title} (${titleRecords[title].count})`}</label>
+          <Select
+            onValueChange={(category: Category_Type) => {
+              titleRecords[title].category = category;
+            }}
+            defaultValue={titleRecords[title].category}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Add Mapping" />
+            </SelectTrigger>
+            <SelectContent>{OptionsFromDefaultCategory}</SelectContent>
+          </Select>
+        </div>
+      );
+    });
+  }, [preMappedTitles, titleMappedData]);
 
   return (
     <Page
@@ -75,30 +172,14 @@ export const TitleMappingScreen = () => {
       }}
       previousLabel="Previous"
     >
-      <div className="flex flex-wrap gap-1.5">
-        {titleSortedList.map((title) => {
-          const randomColor = colors[Math.floor(Math.random() * colors.length)];
-          return (
-            <div
-              key={title}
-              className={`flex items-center justify-center rounded-lg border-2 ${randomColor} p-1.5 gap-1.5`}
-            >
-              <label>{`${title} (${titleRecords[title].count})`}</label>
-              <Select
-                onValueChange={(category: Category_Type) => {
-                  titleRecords[title].category = category;
-                }}
-                defaultValue="Uncategorized"
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Add Mapping" />
-                </SelectTrigger>
-                <SelectContent>{OptionsFromDefaultCategory}</SelectContent>
-              </Select>
-            </div>
-          );
-        })}
-      </div>
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[250px]" />
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">{renderContent}</div>
+      )}
     </Page>
   );
 };

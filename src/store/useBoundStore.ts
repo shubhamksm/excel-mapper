@@ -9,15 +9,18 @@ import {
   createTitleMappingSlice,
   TitleMappingSlice,
 } from "./titleMappingSlice";
+import { createDriveSlice, DriveSlice } from "./driveSlice";
 
 export type StoreState = ScreenSlice &
   FileUploadSlice &
   HeaderMappingSlice &
-  TitleMappingSlice;
+  TitleMappingSlice &
+  DriveSlice;
 
 export const useBoundStore = create<StoreState>()((...a) => ({
   ...createScreenSlice(...a),
   ...createFileUploadSlice(...a),
   ...createHeaderMappingSlice(...a),
   ...createTitleMappingSlice(...a),
+  ...createDriveSlice(...a),
 }));

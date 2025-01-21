@@ -16,7 +16,9 @@ const App = () => {
     useShallow((state) => state.currentScreen)
   );
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
-  const [appFolderId, setAppFolderId] = useState<string | undefined>();
+  const setRootFolderId = useBoundStore(
+    useShallow((state) => state.setRootFolderId)
+  );
 
   const getCurrentScreen = useCallback(() => {
     switch (currentScreen) {
@@ -46,9 +48,9 @@ const App = () => {
       const folderId = await getFolderByName(DEFAULT_FOLDER_NAME);
       if (!folderId) {
         const newFolderId = await createFolder(DEFAULT_FOLDER_NAME);
-        setAppFolderId(newFolderId);
+        setRootFolderId(newFolderId);
       } else {
-        setAppFolderId(folderId);
+        setRootFolderId(folderId);
       }
     };
     if (isLoggedIn) {

@@ -28,3 +28,5 @@ export const CATEGORY_LIST = [
 ] as const;
 
 export const DEFAULT_FOLDER_NAME = "EXCEL_MAPPER";
+
+export const DEFAULT_TITLE_MAP_FILE = "TITLE_MAP.json";

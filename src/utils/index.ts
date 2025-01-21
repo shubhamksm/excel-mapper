@@ -8,6 +8,7 @@ import {
   Headers,
   MappedHeaders,
 } from "../types";
+import { PreMappedTitles, TitleRecords } from "@/screens/TitleMappingScreen";
 
 export const extractHeaders = (obj: Generic_CSV_Record): Headers => {
   return [
@@ -48,4 +49,27 @@ export const mapRowWithHeaders = (
     }
   }
   return result;
+};
+
+export const mapRowWithCategory = (
+  titleMappedData: CSV_Data,
+  titleRecords: TitleRecords
+): CSV_Data => {
+  return titleMappedData.map((row) => {
+    return {
+      ...row,
+      Category: titleRecords[row.Title].category,
+    };
+  });
+};
+
+export const updatePreMappedTitles = (
+  titleRecords: TitleRecords
+): PreMappedTitles => {
+  return Object.fromEntries(
+    Object.entries(titleRecords).map(([title, { category }]) => [
+      title,
+      category,
+    ])
+  );
 };
