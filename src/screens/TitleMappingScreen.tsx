@@ -12,12 +12,13 @@ import {
   createJsonFile,
   getJsonFileByName,
   readJsonFileContent,
+  sortAndDivideTransactions,
   updateJsonFile,
 } from "@/services/drive";
 import { useBoundStore } from "@/store/useBoundStore";
 import { Category_Type } from "@/types";
 import { mapRowWithCategory, updatePreMappedTitles } from "@/utils";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 
 export type TitleRecords = Record<
@@ -112,7 +113,7 @@ export const TitleMappingScreen = () => {
   }, [preMappedTitles, titleMappedData]);
 
   const handleNext = async () => {
-    if (titleMappedData && preMappedTitlesFileId) {
+    if (titleMappedData && preMappedTitlesFileId && rootFolderId) {
       const categoryMappedData = mapRowWithCategory(
         titleMappedData,
         titleRecords
@@ -120,7 +121,18 @@ export const TitleMappingScreen = () => {
       const updatedPreMappedTitles = updatePreMappedTitles(titleRecords);
       await updateJsonFile(preMappedTitlesFileId, updatedPreMappedTitles);
       console.log("Output :: ", { categoryMappedData, updatedPreMappedTitles });
+      // [TODO]: Remove this hard coded mapping
+      const temporayHardCodedAccountNameData = categoryMappedData.map((row) => {
+        return {
+          ...row,
+          Account: "shubham_spare",
+        };
+      });
       // [TODO] Assign data, distribute it into yearly, and upload in their respective csv file in the drive
+      await sortAndDivideTransactions(
+        temporayHardCodedAccountNameData,
+        rootFolderId
+      );
     }
   };
 
