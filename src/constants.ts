@@ -24,6 +24,7 @@ export const CATEGORY_LIST = [
   "Dining",
   "Salary",
   "Extras",
+  "Personal",
   "Uncategorized",
 ] as const;
 
