@@ -2,13 +2,15 @@ import { CATEGORY_LIST } from "@/constants";
 import { PreMappedTitles } from "@/screens/TitleMappingScreen";
 import { Category_Type, CSV_Data } from "@/types";
 
+const maskTitle = (title: string) => {
+  return title.replace(/\d+/g, (match) => "X".repeat(match.length));
+};
+
 export const getCategoryMapping = async (
   transactions: CSV_Data
 ): Promise<PreMappedTitles> => {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${
-      import.meta.env.VITE_GEMINI_API_KEY
-    }`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.VITE_GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: {
@@ -40,7 +42,7 @@ const getRequestBody = (transactions: CSV_Data) => {
             Be precise and consistent in your categorization. 
             If description contains any name assign those to Personal Category, 
             Here's the transactions list: ${transactions
-              .map((t) => t.Title)
+              .map((t) => maskTitle(t.Title.toString()))
               .join(",\n")}`,
           },
         ],

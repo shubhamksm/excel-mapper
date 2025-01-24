@@ -1,7 +1,7 @@
 import { gapi } from "gapi-script";
 
-export const CLIENT_ID = import.meta.env.VITE_GAPI_CLIENT_ID;
-export const API_KEY = import.meta.env.VITE_GAPI_API_KEY;
+export const CLIENT_ID = process.env.VITE_GAPI_CLIENT_ID;
+export const API_KEY = process.env.VITE_GAPI_API_KEY;
 
 export const DISCOVERY_DOCS = [
   "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",

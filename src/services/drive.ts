@@ -4,6 +4,7 @@ import { parse, unparse } from "papaparse";
 
 export const listFiles = async () => {
   try {
+    // @ts-ignore
     const response = await gapi.client.drive.files.list({
       pageSize: 10,
       fields: "files(id, name, mimeType)",
@@ -17,6 +18,7 @@ export const listFiles = async () => {
 
 const getByName = async (query: string) => {
   try {
+    // @ts-ignore
     const response = await gapi.client.drive.files.list({
       q: query,
       fields: "files(id, name)",
@@ -49,6 +51,7 @@ export const createFolder = async (folderName: string) => {
       mimeType: "application/vnd.google-apps.folder",
     };
 
+    // @ts-ignore
     const response = await gapi.client.drive.files.create({
       resource: metadata,
       fields: "id",
@@ -64,6 +67,7 @@ export const readJsonFileContent = async <T>(
   fileId: string
 ): Promise<T | undefined> => {
   try {
+    // @ts-ignore
     const response = await gapi.client.drive.files.get({
       fileId,
       alt: "media",
@@ -198,6 +202,7 @@ export const createCsvFile = async (
 
 export const readCsvFileContent = async (fileId: string) => {
   try {
+    // @ts-ignore
     const response = await gapi.client.drive.files.get({
       fileId,
       alt: "media",
