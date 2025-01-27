@@ -16,6 +16,7 @@ import {
   partialMappedHeaders1,
 } from "@/testData";
 import { PreMappedTitles, TitleRecords } from "@/screens/TitleMappingScreen";
+import { normalizeTitle } from "../titleNormalization";
 
 describe("Utils", () => {
   describe("extractHeaders", () => {
@@ -134,9 +135,9 @@ describe("Utils", () => {
       },
     ] as CSV_Data;
 
-    const mockTitleRecords: TitleRecords = {
-      "Card Top-Up": { category: "Income", count: 1 },
-      "REMA 1000": { category: "Groceries", count: 1 },
+    const mockTitleRecords: PreMappedTitles = {
+      [normalizeTitle("Card Top-Up")]: "Income",
+      [normalizeTitle("REMA 1000")]: "Groceries",
     };
 
     it("should map categories correctly to each row", () => {
@@ -165,11 +166,11 @@ describe("Utils", () => {
   });
 
   describe("updatePreMappedTitles", () => {
-    const mockTitleRecords: TitleRecords = {
-      "Card Top-Up": { category: "Income", count: 3 },
-      "REMA 1000": { category: "Groceries", count: 2 },
-      Netflix: { category: "Entertainment", count: 1 },
-    };
+    const mockTitleRecords: TitleRecords[] = [
+      { title: "Card Top-Up", category: "Income", count: 1 },
+      { title: "REMA 1000", category: "Groceries", count: 1 },
+      { title: "Netflix", category: "Entertainment", count: 1 },
+    ];
 
     it("should convert TitleRecords to PreMappedTitles format", () => {
       const expected: PreMappedTitles = {
@@ -183,7 +184,7 @@ describe("Utils", () => {
     });
 
     it("should handle empty title records", () => {
-      const result = updatePreMappedTitles({});
+      const result = updatePreMappedTitles([]);
       expect(result).toEqual({});
     });
 

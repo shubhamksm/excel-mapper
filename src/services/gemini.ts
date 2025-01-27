@@ -34,7 +34,6 @@ export class CategoryMappingService {
 
       return rawData?.transactions ?? [];
     } catch (error) {
-      console.error("Failed to process batch:", error);
       throw new Error(
         `Batch processing failed: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -119,7 +118,6 @@ export class CategoryMappingService {
         return acc;
       }, {} as PreMappedTitles);
     } catch (error) {
-      console.error("Category mapping failed:", error);
       throw new Error("Failed to map categories for transactions");
     }
   }
