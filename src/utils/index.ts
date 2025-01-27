@@ -10,6 +10,7 @@ import {
   MappedHeaders,
 } from "../types";
 import { PreMappedTitles, TitleRecords } from "@/screens/TitleMappingScreen";
+import { normalizeTitle } from "./titleNormalization";
 
 export const extractHeaders = (obj: Generic_CSV_Record): Headers => {
   return [
@@ -27,34 +28,27 @@ export const checkIfRequiredColumnsExists = (
 };
 
 export const parseAmount = (input: string): number => {
-  let cleaned = input
-    .replace(/[^0-9.,()-]/g, "") // Remove non-numeric characters except `.,-()`
-    .trim();
+  let cleaned = input.replace(/[^0-9.,()-]/g, "").trim();
 
-  // Step 2: Handle negative numbers
   let isNegative = false;
   if (
     cleaned.startsWith("-") ||
     (cleaned.startsWith("(") && cleaned.endsWith(")"))
   ) {
     isNegative = true;
-    cleaned = cleaned.replace(/[-()]/g, ""); // Remove negative indicators
+    cleaned = cleaned.replace(/[-()]/g, "");
   }
 
-  // Step 3: Handle multiple decimal points
   const parts = cleaned.split(/[.,]/);
   if (parts.length > 2) {
-    const decimalPart = parts.pop(); // Assume the last segment is the decimal part
-    cleaned = parts.join("") + "." + decimalPart; // Rebuild the number
+    const decimalPart = parts.pop();
+    cleaned = parts.join("") + "." + decimalPart;
   } else if (cleaned.includes(",")) {
-    // Only commas, treat as decimal separator
     cleaned = cleaned.replace(/,/g, ".");
   }
 
-  // Step 4: Parse with Numeral.js
   const parsed = numeral(cleaned).value() ?? 0;
 
-  // Step 5: Apply negative sign if needed
   return isNegative ? -parsed : parsed;
 };
 
@@ -86,25 +80,24 @@ export const mapRowWithHeaders = (
 
 export const mapRowWithCategory = (
   titleMappedData: CSV_Data,
-  titleRecords: TitleRecords
+  mappedTitles: PreMappedTitles
 ): CSV_Data => {
   return titleMappedData.map((row) => {
     return {
       ...row,
-      Category: titleRecords[row.Title].category,
+      Category: mappedTitles[normalizeTitle(row.Title as string)],
     };
   });
 };
 
 export const updatePreMappedTitles = (
-  titleRecords: TitleRecords
+  titleRecords: TitleRecords[]
 ): PreMappedTitles => {
-  return Object.fromEntries(
-    Object.entries(titleRecords).map(([title, { category }]) => [
-      title,
-      category,
-    ])
-  );
+  const preMappedTitles: PreMappedTitles = {};
+  titleRecords.forEach((record) => {
+    preMappedTitles[record.title] = record.category;
+  });
+  return preMappedTitles;
 };
 
 export interface TransactionsByYear {
