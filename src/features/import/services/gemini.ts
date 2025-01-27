@@ -1,5 +1,8 @@
 import { CATEGORY_LIST } from "@/constants";
-import { PreMappedTitles, TitleRecords } from "@/screens/TitleMappingScreen";
+import {
+  PreMappedTitles,
+  TitleRecords,
+} from "@/features/import/components/steps/TitleMappingStep";
 import { Category_Type } from "@/types";
 import {
   GenerateContentRequest,

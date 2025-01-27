@@ -2,6 +2,7 @@ import numeral from "numeral";
 import { parseISO, parse as parseDate, isValid } from "date-fns";
 
 import {
+  Category_Type,
   CSV_Data,
   CSV_Record,
   Generic_CSV_Data,
@@ -9,8 +10,14 @@ import {
   Headers,
   MappedHeaders,
 } from "../types";
-import { PreMappedTitles, TitleRecords } from "@/screens/TitleMappingScreen";
+import {
+  PreMappedTitles,
+  TitleRecords,
+} from "@/features/import/components/steps/TitleMappingStep";
 import { normalizeTitle } from "./titleNormalization";
+import { DEFAULT_TITLE_MAP_FILE } from "@/constants";
+import { getJsonFileByName, readJsonFileContent } from "@/services/drive";
+import { createJsonFile } from "@/services/drive";
 
 export const extractHeaders = (obj: Generic_CSV_Record): Headers => {
   return [
@@ -130,4 +137,70 @@ export const groupTransactionsByYear = (
     }
     return acc;
   }, {});
+};
+
+export const getTitleRecords = (
+  preMappedTitles: PreMappedTitles,
+  titleMappedData?: CSV_Data
+) => {
+  if (titleMappedData) {
+    const _titleRecords: Record<
+      string,
+      { count: number; category: Category_Type }
+    > = {};
+    for (const row of titleMappedData) {
+      const normalizedTitle = normalizeTitle(row.Title as string);
+      if (
+        _titleRecords[normalizedTitle] &&
+        _titleRecords[normalizedTitle].count
+      ) {
+        _titleRecords[normalizedTitle].count += 1;
+      } else {
+        _titleRecords[normalizedTitle] = {
+          count: 1,
+          category: preMappedTitles[normalizedTitle] ?? "Uncategorized",
+        };
+      }
+    }
+    const finalList = Object.keys(_titleRecords).map((key) => {
+      return {
+        title: key,
+        count: _titleRecords[key].count,
+        category: _titleRecords[key].category,
+      };
+    });
+    return finalList;
+  }
+  return [];
+};
+
+export const getPreMappedTitles = async (
+  rootFolderId: string
+): Promise<
+  | {
+      fileId: string;
+      data: PreMappedTitles;
+    }
+  | undefined
+> => {
+  const titleMapFileId = await getJsonFileByName(DEFAULT_TITLE_MAP_FILE);
+  if (titleMapFileId) {
+    const titleMap =
+      (await readJsonFileContent<PreMappedTitles>(titleMapFileId)) ?? {};
+    return {
+      fileId: titleMapFileId,
+      data: titleMap,
+    };
+  }
+  const newTitleMapFileId = await createJsonFile(
+    DEFAULT_TITLE_MAP_FILE,
+    {},
+    rootFolderId
+  );
+  if (newTitleMapFileId) {
+    return {
+      fileId: newTitleMapFileId,
+      data: {},
+    };
+  }
 };

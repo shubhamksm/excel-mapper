@@ -21,7 +21,7 @@ const OptionsFromTemplateColumns = TEMPLATE_COLUMNS.map((column) => {
   );
 });
 
-export const HeaderMappingScreen = () => {
+export const HeaderMappingStep = () => {
   const [mappedHeaders, setMappedHeaders] = useBoundStore(
     useShallow((state) => [state.mappedHeaders, state.setMappedHeaders])
   );

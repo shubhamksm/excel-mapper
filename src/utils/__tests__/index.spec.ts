@@ -15,7 +15,10 @@ import {
   fullyMappedHeaders1,
   partialMappedHeaders1,
 } from "@/testData";
-import { PreMappedTitles, TitleRecords } from "@/screens/TitleMappingScreen";
+import {
+  PreMappedTitles,
+  TitleRecords,
+} from "@/features/import/components/steps/TitleMappingStep";
 import { normalizeTitle } from "../titleNormalization";
 
 describe("Utils", () => {

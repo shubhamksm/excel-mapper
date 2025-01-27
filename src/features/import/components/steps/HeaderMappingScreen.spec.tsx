@@ -1,7 +1,7 @@
 import { mockUseStore } from "@/__mocks__/zustand";
 import { parsedFile1 } from "@/testData";
 import { render } from "@testing-library/react";
-import { HeaderMappingScreen } from "../HeaderMappingScreen";
+import { HeaderMappingStep } from "./HeaderMappingStep";
 
 describe("Header Mapping Screen", () => {
   const parsedFile = parsedFile1;
@@ -14,7 +14,7 @@ describe("Header Mapping Screen", () => {
   });
 
   it("Should match snapshots", () => {
-    const { container } = render(<HeaderMappingScreen />);
+    const { container } = render(<HeaderMappingStep />);
 
     expect(container).toMatchSnapshot();
   });

@@ -1,37 +1,17 @@
-import { UploadFileScreen } from "@/screens/UploadFileScreen";
-import { HeaderMappingScreen } from "@/screens/HeaderMappingScreen";
-import { TitleMappingScreen } from "@/screens/TitleMappingScreen";
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { initClient, signIn } from "@/services/auth";
 import { createFolder, getFolderByName } from "@/services/drive";
 import { Button } from "@/components/ui/button";
-import { useBoundStore } from "./store/useBoundStore";
-import { ExcelMappingScreens } from "./types";
+import { useBoundStore } from "@/store/useBoundStore";
 import { useShallow } from "zustand/react/shallow";
-import { DEFAULT_FOLDER_NAME } from "./constants";
+import { DEFAULT_FOLDER_NAME } from "@/constants";
+import { ExcelImportModal } from "@/features/import";
 
 const App = () => {
-  const currentScreen = useBoundStore(
-    useShallow((state) => state.currentScreen)
-  );
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
   const setRootFolderId = useBoundStore(
     useShallow((state) => state.setRootFolderId)
   );
-
-  const getCurrentScreen = useCallback(() => {
-    switch (currentScreen) {
-      case ExcelMappingScreens.UPLOAD_FILE:
-        return <UploadFileScreen />;
-      case ExcelMappingScreens.HEADER_MAPPING:
-        return <HeaderMappingScreen />;
-      case ExcelMappingScreens.TITLE_MAPPING:
-        return <TitleMappingScreen />;
-      default:
-        return <UploadFileScreen />;
-    }
-  }, [currentScreen]);
 
   useEffect(() => {
     gapi.load("client:auth2", () =>
@@ -66,7 +46,7 @@ const App = () => {
             <Button onClick={() => signIn(updateIsLoggedIn)}>Login</Button>
           </div>
         ) : (
-          getCurrentScreen()
+          <ExcelImportModal isOpen={true} onClose={() => {}} />
         )}
       </div>
     </div>

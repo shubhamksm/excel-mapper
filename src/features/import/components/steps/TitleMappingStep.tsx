@@ -6,27 +6,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORY_LIST, DEFAULT_TITLE_MAP_FILE } from "@/constants";
+import { CATEGORY_LIST } from "@/constants";
 import { DataTable } from "@/containers/DataTable";
 import Page from "@/layouts/Page";
-import {
-  createJsonFile,
-  getJsonFileByName,
-  readJsonFileContent,
-  sortAndDivideTransactions,
-  updateJsonFile,
-} from "@/services/drive";
+import { sortAndDivideTransactions, updateJsonFile } from "@/services/drive";
 import { useBoundStore } from "@/store/useBoundStore";
-import { Category_Type, CSV_Data } from "@/types";
-import { mapRowWithCategory, updatePreMappedTitles } from "@/utils";
-import { normalizeTitle } from "@/utils/titleNormalization";
+import { Category_Type } from "@/types";
+import {
+  getPreMappedTitles,
+  getTitleRecords,
+  mapRowWithCategory,
+  updatePreMappedTitles,
+} from "@/utils";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { Loader2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CategoryMappingService } from "@/services/gemini";
+import { CategoryMappingService } from "@/features/import/services";
 
 export type TitleRecords = {
   title: string;
@@ -43,40 +41,6 @@ const OptionsFromDefaultCategory = CATEGORY_LIST.map((name) => {
     </SelectItem>
   );
 });
-
-const getPreMappedTitles = async (
-  rootFolderId: string
-): Promise<
-  | {
-      fileId: string;
-      data: PreMappedTitles;
-    }
-  | undefined
-> => {
-  // check if json file already exists
-  const titleMapFileId = await getJsonFileByName(DEFAULT_TITLE_MAP_FILE);
-  // yes => read and return json and fileId
-  if (titleMapFileId) {
-    const titleMap =
-      (await readJsonFileContent<PreMappedTitles>(titleMapFileId)) ?? {};
-    return {
-      fileId: titleMapFileId,
-      data: titleMap,
-    };
-  }
-  // no => create and return empty json and fileId
-  const newTitleMapFileId = await createJsonFile(
-    DEFAULT_TITLE_MAP_FILE,
-    {},
-    rootFolderId
-  );
-  if (newTitleMapFileId) {
-    return {
-      fileId: newTitleMapFileId,
-      data: {},
-    };
-  }
-};
 
 const columns: ColumnDef<TitleRecords>[] = [
   {
@@ -132,44 +96,7 @@ function useSkipper() {
   return [shouldSkip, skip] as const;
 }
 
-const getTitleRecords = (
-  preMappedTitles: PreMappedTitles,
-  titleMappedData?: CSV_Data
-) => {
-  console.count("getTitleRecords !!");
-  console.log("getTitleRecords :: ", { preMappedTitles, titleMappedData });
-  if (titleMappedData) {
-    const _titleRecords: Record<
-      string,
-      { count: number; category: Category_Type }
-    > = {};
-    for (const row of titleMappedData) {
-      const normalizedTitle = normalizeTitle(row.Title as string);
-      if (
-        _titleRecords[normalizedTitle] &&
-        _titleRecords[normalizedTitle].count
-      ) {
-        _titleRecords[normalizedTitle].count += 1;
-      } else {
-        _titleRecords[normalizedTitle] = {
-          count: 1,
-          category: preMappedTitles[normalizedTitle] ?? "Uncategorized",
-        };
-      }
-    }
-    const finalList = Object.keys(_titleRecords).map((key) => {
-      return {
-        title: key,
-        count: _titleRecords[key].count,
-        category: _titleRecords[key].category,
-      };
-    });
-    return finalList;
-  }
-  return [];
-};
-
-export const TitleMappingScreen = () => {
+export const TitleMappingStep = () => {
   const titleMappedData = useBoundStore(
     useShallow((state) => state.titleMappedData)
   );
@@ -184,7 +111,6 @@ export const TitleMappingScreen = () => {
   const [titleRecords, setTitleRecords] = useState<TitleRecords[]>([]);
 
   const handleNext = async () => {
-    console.log("Handle Next => ", { titleRecords });
     if (titleMappedData && preMappedTitlesFileId && rootFolderId) {
       const updatedPreMappedTitles = updatePreMappedTitles(titleRecords);
       const categoryMappedData = mapRowWithCategory(
@@ -192,15 +118,12 @@ export const TitleMappingScreen = () => {
         updatedPreMappedTitles
       );
       await updateJsonFile(preMappedTitlesFileId, updatedPreMappedTitles);
-      console.log("Output :: ", { categoryMappedData, updatedPreMappedTitles });
-      // [TODO]: Remove this hard coded mapping
       const temporayHardCodedAccountNameData = categoryMappedData.map((row) => {
         return {
           ...row,
           Account: "shubham_spare",
         };
       });
-      // [TODO] Assign data, distribute it into yearly, and upload in their respective csv file in the drive
       await sortAndDivideTransactions(
         temporayHardCodedAccountNameData,
         rootFolderId
@@ -213,7 +136,6 @@ export const TitleMappingScreen = () => {
       if (rootFolderId) {
         const response = await getPreMappedTitles(rootFolderId);
         if (response) {
-          console.warn("Initial fetch of pre mapped Titles");
           setPreMappedTitles(response.data ?? {});
           setPreMappedTitlesFileId(response.fileId);
           setIsLoading(false);
@@ -244,11 +166,6 @@ export const TitleMappingScreen = () => {
             ? preMappedTitles[key]
             : mapping[key];
       }
-      console.log("Mapping Data => ", {
-        mergedMapping,
-        preMappedTitles,
-        mapping,
-      });
       setPreMappedTitles(mergedMapping);
       setIsGeminiLoading(false);
     }

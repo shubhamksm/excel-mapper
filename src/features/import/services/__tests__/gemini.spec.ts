@@ -1,6 +1,6 @@
 import { CategoryMappingService } from "../gemini";
 import { CATEGORY_LIST } from "@/constants";
-import { TitleRecords } from "@/screens/TitleMappingScreen";
+import { TitleRecords } from "@/features/import/components/steps/TitleMappingStep";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Mock the Google Generative AI package

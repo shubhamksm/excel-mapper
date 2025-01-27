@@ -7,7 +7,7 @@ import Papa from "papaparse";
 import { ExcelMappingScreens, Generic_CSV_Data } from "@/types";
 import { useShallow } from "zustand/react/shallow";
 
-export const UploadFileScreen = () => {
+export const UploadFileStep = () => {
   const [rawFile, setRawFile] = useBoundStore(
     useShallow((state) => [state.rawFile, state.setRawFile])
   );
