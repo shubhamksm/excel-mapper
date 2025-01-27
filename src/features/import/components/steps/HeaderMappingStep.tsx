@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Page from "@/layouts/Page";
-import { useBoundStore } from "@/store/useBoundStore";
+import { useBoundStore } from "@/features/import/store/useBoundStore";
 import { extractHeaders, mapRowWithHeaders } from "@/utils";
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";

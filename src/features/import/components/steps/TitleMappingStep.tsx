@@ -10,7 +10,7 @@ import { CATEGORY_LIST } from "@/constants";
 import { DataTable } from "@/containers/DataTable";
 import Page from "@/layouts/Page";
 import { sortAndDivideTransactions, updateJsonFile } from "@/services/drive";
-import { useBoundStore } from "@/store/useBoundStore";
+import { useBoundStore } from "@/features/import/store/useBoundStore";
 import { Category_Type } from "@/types";
 import {
   getPreMappedTitles,
@@ -25,6 +25,7 @@ import React from "react";
 import { Loader2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryMappingService } from "@/features/import/services";
+import { useAppStore } from "@/store/useAppStore";
 
 export type TitleRecords = {
   title: string;
@@ -100,7 +101,7 @@ export const TitleMappingStep = () => {
   const titleMappedData = useBoundStore(
     useShallow((state) => state.titleMappedData)
   );
-  const rootFolderId = useBoundStore(useShallow((state) => state.rootFolderId));
+  const rootFolderId = useAppStore(useShallow((state) => state.rootFolderId));
   const [preMappedTitles, setPreMappedTitles] = useState<PreMappedTitles>();
   const [preMappedTitlesFileId, setPreMappedTitlesFileId] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);

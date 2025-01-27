@@ -1,4 +1,8 @@
-import { StoreState, useBoundStore } from "@/store/useBoundStore";
+import {
+  StoreState,
+  useBoundStore,
+} from "@/features/import/store/useBoundStore";
+import { useAppStore, StoreState as AppStoreState } from "@/store/useAppStore";
 
 import type * as ZustandExportedTypes from "zustand";
 export * from "zustand";
@@ -7,12 +11,17 @@ export * from "zustand";
 jest.requireActual<typeof ZustandExportedTypes>("zustand");
 
 // Turn useBoundStore to mock
-jest.mock("../store/useBoundStore", () => ({
+jest.mock("../features/import/store/useBoundStore", () => ({
   useBoundStore: jest.fn(),
+}));
+
+jest.mock("../store/useAppStore", () => ({
+  useAppStore: jest.fn(),
 }));
 
 // Using jest.mock will allow retain the types to useStoreMock
 const useStoreMock = jest.mocked(useBoundStore);
+const useAppStoreMock = jest.mocked(useAppStore);
 
 // Individual tests can use this to override
 export const mockUseStore = (overrides: Partial<StoreState> = {}) => {
@@ -21,7 +30,18 @@ export const mockUseStore = (overrides: Partial<StoreState> = {}) => {
       // we include the store's actual values by default
       // this allows the mocked store to have complete functionality,
       // with "granular" mocks defined as specified by tests
-      ...jest.requireActual("../store/useBoundStore").useBoundStore(),
+      ...jest
+        .requireActual("../features/import/store/useBoundStore")
+        .useBoundStore(),
+      ...overrides,
+    });
+  });
+};
+
+export const mockUseAppStore = (overrides: Partial<AppStoreState> = {}) => {
+  useAppStoreMock.mockImplementation((getterFn) => {
+    return getterFn({
+      ...jest.requireActual("../store/useAppStore").useAppStore(),
       ...overrides,
     });
   });
@@ -32,4 +52,5 @@ export const mockUseStore = (overrides: Partial<StoreState> = {}) => {
 // you can use beforeAll to set the default mock once per test suite
 beforeEach(() => {
   mockUseStore();
+  mockUseAppStore();
 });

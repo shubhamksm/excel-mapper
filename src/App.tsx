@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { initClient, signIn } from "@/services/auth";
 import { createFolder, getFolderByName } from "@/services/drive";
 import { Button } from "@/components/ui/button";
-import { useBoundStore } from "@/store/useBoundStore";
+import { useAppStore } from "@/store/useAppStore";
 import { useShallow } from "zustand/react/shallow";
 import { DEFAULT_FOLDER_NAME } from "@/constants";
 import { ExcelImportModal } from "@/features/import";
 
 const App = () => {
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
-  const setRootFolderId = useBoundStore(
+  const setRootFolderId = useAppStore(
     useShallow((state) => state.setRootFolderId)
   );
 

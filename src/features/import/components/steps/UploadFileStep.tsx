@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Page from "@/layouts/Page";
-import { useBoundStore } from "@/store/useBoundStore";
+import { useBoundStore } from "@/features/import/store/useBoundStore";
 import Papa from "papaparse";
 import { ExcelMappingScreens, Generic_CSV_Data } from "@/types";
 import { useShallow } from "zustand/react/shallow";

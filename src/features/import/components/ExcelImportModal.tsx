@@ -1,6 +1,6 @@
 import { HeaderMappingStep, TitleMappingStep, UploadFileStep } from "./steps";
 import { useShallow } from "zustand/react/shallow";
-import { useBoundStore } from "@/store/useBoundStore";
+import { useBoundStore } from "@/features/import/store/useBoundStore";
 import { ExcelMappingScreens } from "@/types";
 import { useCallback } from "react";
 
