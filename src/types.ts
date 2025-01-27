@@ -21,3 +21,19 @@ export enum ExcelMappingScreens {
   HEADER_MAPPING = "HEADER_MAPPING",
   TITLE_MAPPING = "TITLE_MAPPING",
 }
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  accountId: string;
+  year: number;
+  title: string;
+  amount: number;
+  currency: string;
+  date: Date;
+  category: string;
+  exchangeRate?: number;
+  referenceAccountId?: string;
+  referenceAmount?: number;
+  linkedTransactionId?: string;
+}

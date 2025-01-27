@@ -19,6 +19,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "file-saver": "^2.0.5",
+    "firebase": "^11.2.0",
     "gapi-script": "^1.2.0",
     "lucide-react": "^0.473.0",
     "numeral": "^2.0.6",
