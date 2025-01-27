@@ -46,7 +46,7 @@ const App = () => {
             <Button onClick={() => signIn(updateIsLoggedIn)}>Login</Button>
           </div>
         ) : (
-          <ExcelImportModal isOpen={true} onClose={() => {}} />
+          <ExcelImportModal />
         )}
       </div>
     </div>
