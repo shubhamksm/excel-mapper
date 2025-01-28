@@ -1,4 +1,4 @@
-import { CATEGORY_LIST } from "@/constants";
+import { Category_Enum, CATEGORY_LIST } from "@/constants";
 import {
   PreMappedTitles,
   TitleRecords,
@@ -55,7 +55,7 @@ export class CategoryMappingService {
               text: `Help categorize the transaction descriptions. 
             **Only Respond by Calling categorize_transactions function**
             *Important* Only use these categories: ${CATEGORY_LIST.filter(
-              (t) => t !== "Uncategorized"
+              (t) => t !== Category_Enum.UNCATEGORIZED
             ).join(", ")}. 
             Be precise and consistent in your categorization. 
             If description contains any name assign those to Personal Category, 
@@ -110,7 +110,7 @@ export class CategoryMappingService {
     }
 
     const batchToProcess = transactions.filter(
-      (t) => t.category === "Uncategorized"
+      (t) => t.category === Category_Enum.UNCATEGORIZED
     );
 
     try {

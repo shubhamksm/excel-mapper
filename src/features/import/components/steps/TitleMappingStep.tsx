@@ -6,17 +6,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORY_LIST } from "@/constants";
+import { Category_Enum, CATEGORY_LIST } from "@/constants";
 import { DataTable } from "@/containers/DataTable";
 import Page from "@/layouts/Page";
-import { sortAndDivideTransactions, updateJsonFile } from "@/services/drive";
+// import { sortAndDivideTransactions } from "@/services/drive";
 import { useBoundStore } from "@/features/import/store/useBoundStore";
 import { Category_Type } from "@/types";
 import {
-  getPreMappedTitles,
+  // getPreMappedTitles,
   getTitleRecords,
   mapRowWithCategory,
   updatePreMappedTitles,
+  toTitleCase,
 } from "@/utils";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/shallow";
@@ -38,7 +39,7 @@ export type PreMappedTitles = Record<string, Category_Type>;
 const OptionsFromDefaultCategory = CATEGORY_LIST.map((name) => {
   return (
     <SelectItem key={name} value={name}>
-      {name}
+      {toTitleCase(name)}
     </SelectItem>
   );
 });
@@ -102,9 +103,12 @@ export const TitleMappingStep = () => {
     useShallow((state) => state.titleMappedData)
   );
   const rootFolderId = useAppStore(useShallow((state) => state.rootFolderId));
-  const [preMappedTitles, setPreMappedTitles] = useState<PreMappedTitles>();
-  const [preMappedTitlesFileId, setPreMappedTitlesFileId] = useState<string>();
-  const [isLoading, setIsLoading] = useState(true);
+  const accounts = useAppStore(useShallow((state) => state.accounts));
+  const [preMappedTitles, setPreMappedTitles] = useState<PreMappedTitles>({});
+  // const [isLoading, setIsLoading] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<
+    string | undefined
+  >(undefined);
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
   const [isGeminiLoading, setIsGeminiLoading] = useState<boolean>(false);
   const categoryMappingService = new CategoryMappingService();
@@ -112,39 +116,38 @@ export const TitleMappingStep = () => {
   const [titleRecords, setTitleRecords] = useState<TitleRecords[]>([]);
 
   const handleNext = async () => {
-    if (titleMappedData && preMappedTitlesFileId && rootFolderId) {
+    if (
+      titleMappedData &&
+      // preMappedTitlesFileId &&
+      // rootFolderId &&
+      selectedAccountId
+    ) {
       const updatedPreMappedTitles = updatePreMappedTitles(titleRecords);
       const categoryMappedData = mapRowWithCategory(
         titleMappedData,
-        updatedPreMappedTitles
+        updatedPreMappedTitles,
+        selectedAccountId,
+        accounts.find((account) => account.id === selectedAccountId)
+          ?.currency ?? "NOK"
       );
-      await updateJsonFile(preMappedTitlesFileId, updatedPreMappedTitles);
-      const temporayHardCodedAccountNameData = categoryMappedData.map((row) => {
-        return {
-          ...row,
-          Account: "shubham_spare",
-        };
-      });
-      await sortAndDivideTransactions(
-        temporayHardCodedAccountNameData,
-        rootFolderId
-      );
+      // [TODO: Get all transactions for current user, and create a titleMapping]
+      console.log(categoryMappedData);
+      // [TODO: Upload transactions to firebase]
     }
   };
 
-  useEffect(() => {
-    const prepareData = async () => {
-      if (rootFolderId) {
-        const response = await getPreMappedTitles(rootFolderId);
-        if (response) {
-          setPreMappedTitles(response.data ?? {});
-          setPreMappedTitlesFileId(response.fileId);
-          setIsLoading(false);
-        }
-      }
-    };
-    prepareData();
-  }, []);
+  // useEffect(() => {
+  //   const prepareData = async () => {
+  //     if (rootFolderId) {
+  //       const response = await getPreMappedTitles(rootFolderId);
+  //       if (response) {
+  //         setPreMappedTitles(response.data ?? {});
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
+  //   prepareData();
+  // }, []);
 
   useEffect(() => {
     if (titleMappedData && preMappedTitles) {
@@ -162,7 +165,7 @@ export const TitleMappingStep = () => {
       const mergedMapping: PreMappedTitles = {};
       for (const key of Object.keys(mapping)) {
         mergedMapping[key] =
-          preMappedTitles[key] !== "Uncategorized" &&
+          preMappedTitles[key] !== Category_Enum.UNCATEGORIZED &&
           preMappedTitles[key] !== undefined
             ? preMappedTitles[key]
             : mapping[key];
@@ -178,25 +181,48 @@ export const TitleMappingStep = () => {
       nextLabel="Finish"
       nextButtonProps={{
         onClick: handleNext,
+        disabled: selectedAccountId === undefined,
       }}
       previousLabel="Previous"
     >
-      {!titleMappedData || isLoading ? (
+      {!titleMappedData ? (
         <div className="space-y-2">
           <Skeleton className="h-4 w-[250px]" />
           <Skeleton className="h-4 w-[250px]" />
         </div>
       ) : (
         <div>
-          <Button
-            onClick={getMappingWithAI}
-            disabled={isGeminiLoading}
-            size={"xs"}
-            className="bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transform transition duration-500 hover:scale-101 float-right"
-          >
-            {isGeminiLoading ? <Loader2 className="animate-spin" /> : <Wand2 />}
-            Auto Assign Categories
-          </Button>
+          <div className="flex justify-between w-full">
+            <Select
+              onValueChange={(value) => {
+                setSelectedAccountId(value);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={getMappingWithAI}
+              disabled={isGeminiLoading}
+              size={"xs"}
+              className="bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transform transition duration-500 hover:scale-101"
+            >
+              {isGeminiLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Wand2 />
+              )}
+              Auto Assign Categories
+            </Button>
+          </div>
           <DataTable
             data={titleRecords}
             columns={columns}

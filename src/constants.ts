@@ -1,31 +1,50 @@
 export const TEMPLATE_COLUMNS = [
-  "Date",
-  "Amount",
-  "Category",
-  "Title",
-  "Note",
-  "Account",
+  "date",
+  "amount",
+  "category",
+  "title",
+  "currency",
+  "note",
 ] as const;
 
-export const REQUIRED_TEMPLATE_COLUMNS = ["Date", "Amount", "Title"];
+export const REQUIRED_TEMPLATE_COLUMNS = ["date", "amount", "title"];
+
+export enum Category_Enum {
+  GROCERIES = "GROCERIES",
+  NON_GROCERIES = "NON_GROCERIES",
+  ENTERTAINMENT = "ENTERTAINMENT",
+  SHOPPING = "SHOPPING",
+  TRANSIT = "TRANSIT",
+  BILLS_AND_FEES = "BILLS_AND_FEES",
+  GIFTS = "GIFTS",
+  TRAVEL = "TRAVEL",
+  INCOME = "INCOME",
+  BALANCE_CORRECTION = "BALANCE_CORRECTION",
+  HEALTH = "HEALTH",
+  DINING = "DINING",
+  SALARY = "SALARY",
+  EXTRAS = "EXTRAS",
+  PERSONAL = "PERSONAL",
+  UNCATEGORIZED = "UNCATEGORIZED",
+}
 
 export const CATEGORY_LIST = [
-  "Groceries",
-  "Non Groceries",
-  "Entertainment",
-  "Shopping",
-  "Transit",
-  "Bills & Fees",
-  "Gifts",
-  "Travel",
-  "Income",
-  "Balance Correction",
-  "Health",
-  "Dining",
-  "Salary",
-  "Extras",
-  "Personal",
-  "Uncategorized",
+  "GROCERIES",
+  "NON_GROCERIES",
+  "ENTERTAINMENT",
+  "SHOPPING",
+  "TRANSIT",
+  "BILLS_AND_FEES",
+  "GIFTS",
+  "TRAVEL",
+  "INCOME",
+  "BALANCE_CORRECTION",
+  "HEALTH",
+  "DINING",
+  "SALARY",
+  "EXTRAS",
+  "PERSONAL",
+  "UNCATEGORIZED",
 ] as const;
 
 export const DEFAULT_FOLDER_NAME = "EXCEL_MAPPER";

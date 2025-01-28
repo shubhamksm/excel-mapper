@@ -16,7 +16,7 @@ import { useShallow } from "zustand/react/shallow";
 const OptionsFromTemplateColumns = TEMPLATE_COLUMNS.map((column) => {
   return (
     <SelectItem key={column} value={column}>
-      {column}
+      {column.charAt(0).toUpperCase() + column.slice(1)}
     </SelectItem>
   );
 });

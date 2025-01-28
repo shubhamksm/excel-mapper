@@ -1,3 +1,4 @@
+import { Category_Enum } from "@/constants";
 import { LocalTransactionProcessor } from "../processTransactions";
 
 describe("LocalTransactionProcessor", () => {
@@ -16,7 +17,7 @@ describe("LocalTransactionProcessor", () => {
         currency: "NOK",
         date: new Date("2024-10-01"),
         year: 2024,
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         referenceAccountId: "main_norway",
       },
       {
@@ -25,7 +26,7 @@ describe("LocalTransactionProcessor", () => {
         currency: "NOK",
         date: new Date("2024-10-22"),
         year: 2024,
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         referenceAccountId: "main_norway",
       },
     ];
@@ -42,7 +43,7 @@ describe("LocalTransactionProcessor", () => {
         amount: -1000,
         currency: "NOK",
         date: new Date("2024-10-01"),
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         year: 2024,
         referenceAccountId: "monthly_norway",
       },
@@ -51,7 +52,7 @@ describe("LocalTransactionProcessor", () => {
         amount: -500,
         currency: "NOK",
         date: new Date("2024-10-22"),
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         year: 2024,
         referenceAccountId: "monthly_norway",
       },
@@ -60,7 +61,7 @@ describe("LocalTransactionProcessor", () => {
         amount: -10000,
         currency: "NOK",
         date: new Date("2024-10-15"),
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         year: 2024,
         referenceAccountId: "main_india",
         referenceAmount: 118000,
@@ -76,7 +77,7 @@ describe("LocalTransactionProcessor", () => {
         amount: 118000,
         currency: "INR",
         date: new Date("2024-10-16"),
-        category: "Transfer",
+        category: Category_Enum.INCOME,
         referenceAccountId: "main_norway",
         referenceAmount: 10000,
         year: 2024,
@@ -126,7 +127,7 @@ describe("LocalTransactionProcessor", () => {
         amount: 1000,
         currency: "NOK",
         date: new Date("2024-10-01"),
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         referenceAccountId: "account2",
         year: 2024,
       },
@@ -138,7 +139,7 @@ describe("LocalTransactionProcessor", () => {
         amount: 900, // Different amount
         currency: "NOK",
         date: new Date("2024-10-01"),
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         referenceAccountId: "account1",
         year: 2024,
       },
@@ -159,7 +160,7 @@ describe("LocalTransactionProcessor", () => {
         amount: -1000,
         currency: "NOK",
         date: new Date("2024-10-01"),
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         referenceAccountId: "account2",
         referenceAmount: 12000,
         year: 2024,
@@ -172,7 +173,7 @@ describe("LocalTransactionProcessor", () => {
         amount: 12000,
         currency: "INR",
         date: new Date("2024-10-04"), // Within 5 days
-        category: "Transfer",
+        category: Category_Enum.BALANCE_CORRECTION,
         referenceAccountId: "account1",
         referenceAmount: 1000,
         year: 2024,

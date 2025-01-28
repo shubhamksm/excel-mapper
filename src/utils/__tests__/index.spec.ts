@@ -1,4 +1,4 @@
-import { CSV_Data, MappedHeaders } from "@/types";
+import { MappedHeaders, Transaction } from "@/types";
 import {
   extractHeaders,
   checkIfRequiredColumnsExists,
@@ -20,6 +20,8 @@ import {
   TitleRecords,
 } from "@/features/import/components/steps/TitleMappingStep";
 import { normalizeTitle } from "../titleNormalization";
+import { Category_Enum } from "@/constants";
+import { TitleMappedData } from "@/features/import/store/titleMappingSlice";
 
 describe("Utils", () => {
   describe("extractHeaders", () => {
@@ -57,7 +59,7 @@ describe("Utils", () => {
 
     it("should return false when required columns are missing", () => {
       const invalidMappedHeaders: MappedHeaders = {
-        NonExistentColumn: "Date",
+        NonExistentColumn: "date",
       };
       const result = checkIfRequiredColumnsExists(
         genericCSVRecord1,
@@ -73,9 +75,9 @@ describe("Utils", () => {
 
       expect(result).toHaveLength(4);
       expect(result[0]).toEqual({
-        Date: "2022-10-04 12:40:58",
-        Title: "Card Top-Up",
-        Amount: 83.99,
+        date: new Date("2022-10-04 12:40:58"),
+        title: "Card Top-Up",
+        amount: 83.99,
       });
     });
 
@@ -89,7 +91,7 @@ describe("Utils", () => {
 
       const result = mapRowWithHeaders(dataWithComma, fullyMappedHeaders1);
 
-      expect(result[0].Amount).toBe(1000.5);
+      expect(result[0].amount).toBe(1000.5);
     });
 
     it("should handle invalid amount values", () => {
@@ -105,7 +107,7 @@ describe("Utils", () => {
         fullyMappedHeaders1
       );
 
-      expect(result[0].Amount).toBe(0);
+      expect(result[0].amount).toBe(0);
     });
 
     it("should skip rows with missing required columns", () => {
@@ -127,59 +129,77 @@ describe("Utils", () => {
   describe("mapRowWithCategory", () => {
     const mockTitleMappedData = [
       {
-        Date: "2022-10-04",
-        Title: "Card Top-Up",
-        Amount: 83.99,
+        date: new Date("2022-10-04"),
+        title: "Card Top-Up",
+        amount: 83.99,
       },
       {
-        Date: "2022-10-06",
-        Title: "REMA 1000",
-        Amount: -52.52,
+        date: new Date("2022-10-06"),
+        title: "REMA 1000",
+        amount: -52.52,
       },
-    ] as CSV_Data;
+    ] as TitleMappedData;
 
     const mockTitleRecords: PreMappedTitles = {
-      [normalizeTitle("Card Top-Up")]: "Income",
-      [normalizeTitle("REMA 1000")]: "Groceries",
+      [normalizeTitle("Card Top-Up")]: Category_Enum.INCOME,
+      [normalizeTitle("REMA 1000")]: Category_Enum.GROCERIES,
     };
 
     it("should map categories correctly to each row", () => {
-      const result = mapRowWithCategory(mockTitleMappedData, mockTitleRecords);
+      const result = mapRowWithCategory(
+        mockTitleMappedData,
+        mockTitleRecords,
+        "account1",
+        "NOK"
+      );
 
       expect(result).toHaveLength(2);
-      expect(result[0].Category).toBe("Income");
-      expect(result[1].Category).toBe("Groceries");
+      expect(result[0].category).toBe(Category_Enum.INCOME);
+      expect(result[1].category).toBe(Category_Enum.GROCERIES);
     });
 
     it("should preserve existing row data while adding category", () => {
-      const result = mapRowWithCategory(mockTitleMappedData, mockTitleRecords);
+      const result = mapRowWithCategory(
+        mockTitleMappedData,
+        mockTitleRecords,
+        "account1",
+        "NOK"
+      );
 
       expect(result[0]).toEqual({
-        Date: "2022-10-04",
-        Title: "Card Top-Up",
-        Amount: 83.99,
-        Category: "Income",
+        date: new Date("2022-10-04"),
+        title: "Card Top-Up",
+        amount: 83.99,
+        category: Category_Enum.INCOME,
+        accountId: "account1",
+        currency: "NOK",
+        year: 2022,
       });
     });
 
     it("should handle empty data array", () => {
-      const result = mapRowWithCategory([], mockTitleRecords);
+      const result = mapRowWithCategory(
+        [],
+        mockTitleRecords,
+        "account1",
+        "NOK"
+      );
       expect(result).toEqual([]);
     });
   });
 
   describe("updatePreMappedTitles", () => {
     const mockTitleRecords: TitleRecords[] = [
-      { title: "Card Top-Up", category: "Income", count: 1 },
-      { title: "REMA 1000", category: "Groceries", count: 1 },
-      { title: "Netflix", category: "Entertainment", count: 1 },
+      { title: "Card Top-Up", category: Category_Enum.INCOME, count: 1 },
+      { title: "REMA 1000", category: Category_Enum.GROCERIES, count: 1 },
+      { title: "Netflix", category: Category_Enum.ENTERTAINMENT, count: 1 },
     ];
 
     it("should convert TitleRecords to PreMappedTitles format", () => {
       const expected: PreMappedTitles = {
-        "Card Top-Up": "Income",
-        "REMA 1000": "Groceries",
-        Netflix: "Entertainment",
+        "Card Top-Up": Category_Enum.INCOME,
+        "REMA 1000": Category_Enum.GROCERIES,
+        Netflix: Category_Enum.ENTERTAINMENT,
       };
 
       const result = updatePreMappedTitles(mockTitleRecords);
@@ -232,10 +252,10 @@ describe("Utils", () => {
   describe("groupTransactionsByYear", () => {
     it("should group transactions by year - Format YYYY-MM-DD", () => {
       const transactions = [
-        { Date: "2022-01-01", Amount: 100, Title: "Test1" },
-        { Date: "2022-02-01", Amount: 200, Title: "Test2" },
-        { Date: "2023-01-01", Amount: 300, Title: "Test3" },
-      ] as CSV_Data;
+        { date: "2022-01-01", amount: 100, title: "Test1" },
+        { date: "2022-02-01", amount: 200, title: "Test2" },
+        { date: "2023-01-01", amount: 300, title: "Test3" },
+      ] as unknown as Transaction[];
 
       const result = groupTransactionsByYear(transactions);
       expect(Object.keys(result)).toEqual(["2022", "2023"]);
@@ -245,10 +265,10 @@ describe("Utils", () => {
 
     it("should group transactions by year - Format DD.MM.YYYY", () => {
       const transactions = [
-        { Date: "27.12.2024", Amount: 100, Title: "Test1" },
-        { Date: "30.01.2023", Amount: 200, Title: "Test2" },
-        { Date: "15.12.2022", Amount: 300, Title: "Test3" },
-      ] as CSV_Data;
+        { date: "27.12.2024", amount: 100, title: "Test1" },
+        { date: "30.01.2023", amount: 200, title: "Test2" },
+        { date: "15.12.2022", amount: 300, title: "Test3" },
+      ] as unknown as Transaction[];
 
       const result = groupTransactionsByYear(transactions);
       expect(Object.keys(result)).toEqual(["2022", "2023", "2024"]);

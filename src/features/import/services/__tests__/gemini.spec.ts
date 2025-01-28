@@ -1,5 +1,5 @@
 import { CategoryMappingService } from "../gemini";
-import { CATEGORY_LIST } from "@/constants";
+import { Category_Enum, CATEGORY_LIST } from "@/constants";
 import { TitleRecords } from "@/features/import/components/steps/TitleMappingStep";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -23,8 +23,8 @@ describe("CategoryMappingService", () => {
 
   it("should successfully map categories from API response", async () => {
     const titleRecords: TitleRecords[] = [
-      { title: "REMA 1000", category: "Uncategorized", count: 1 },
-      { title: "Netflix", category: "Uncategorized", count: 1 },
+      { title: "REMA 1000", category: Category_Enum.UNCATEGORIZED, count: 1 },
+      { title: "Netflix", category: Category_Enum.UNCATEGORIZED, count: 1 },
     ];
 
     // Mock successful API response
@@ -38,8 +38,14 @@ describe("CategoryMappingService", () => {
                   functionCall: {
                     args: {
                       transactions: [
-                        { title: "REMA 1000", category: "Groceries" },
-                        { title: "Netflix", category: "Entertainment" },
+                        {
+                          title: "REMA 1000",
+                          category: Category_Enum.GROCERIES,
+                        },
+                        {
+                          title: "Netflix",
+                          category: Category_Enum.ENTERTAINMENT,
+                        },
                       ],
                     },
                   },
@@ -55,8 +61,8 @@ describe("CategoryMappingService", () => {
 
     // Verify the result
     expect(result).toEqual({
-      "REMA 1000": "Groceries",
-      Netflix: "Entertainment",
+      "REMA 1000": Category_Enum.GROCERIES,
+      Netflix: Category_Enum.ENTERTAINMENT,
     });
 
     // Verify generateContent was called with correct parameters
@@ -69,7 +75,9 @@ describe("CategoryMappingService", () => {
             parts: expect.arrayContaining([
               expect.objectContaining({
                 text: expect.stringContaining(
-                  CATEGORY_LIST.filter((t) => t !== "Uncategorized").join(", ")
+                  CATEGORY_LIST.filter(
+                    (t) => t !== Category_Enum.UNCATEGORIZED
+                  ).join(", ")
                 ),
               }),
             ]),
@@ -81,7 +89,7 @@ describe("CategoryMappingService", () => {
 
   it("should handle empty API response", async () => {
     const titleRecords: TitleRecords[] = [
-      { title: "REMA 1000", category: "Uncategorized", count: 1 },
+      { title: "REMA 1000", category: Category_Enum.UNCATEGORIZED, count: 1 },
     ];
 
     // Mock empty API response
@@ -113,7 +121,7 @@ describe("CategoryMappingService", () => {
 
   it("should handle API error", async () => {
     const titleRecords: TitleRecords[] = [
-      { title: "REMA 1000", category: "Uncategorized", count: 1 },
+      { title: "REMA 1000", category: Category_Enum.UNCATEGORIZED, count: 1 },
     ];
 
     // Mock API error
@@ -132,8 +140,8 @@ describe("CategoryMappingService", () => {
 
   it("should only process uncategorized transactions", async () => {
     const titleRecords: TitleRecords[] = [
-      { title: "REMA 1000", category: "Uncategorized", count: 1 },
-      { title: "Netflix", category: "Entertainment", count: 1 }, // Already categorized
+      { title: "REMA 1000", category: Category_Enum.UNCATEGORIZED, count: 1 },
+      { title: "Netflix", category: Category_Enum.ENTERTAINMENT, count: 1 }, // Already categorized
     ];
 
     mockGenerateContent.mockResolvedValueOnce({
@@ -146,7 +154,10 @@ describe("CategoryMappingService", () => {
                   functionCall: {
                     args: {
                       transactions: [
-                        { title: "REMA 1000", category: "Groceries" },
+                        {
+                          title: "REMA 1000",
+                          category: Category_Enum.GROCERIES,
+                        },
                       ],
                     },
                   },
@@ -161,7 +172,7 @@ describe("CategoryMappingService", () => {
     const result = await service.getCategoryMapping(titleRecords);
 
     expect(result).toEqual({
-      "REMA 1000": "Groceries",
+      "REMA 1000": Category_Enum.GROCERIES,
     });
 
     // Verify that the request only included the uncategorized transaction

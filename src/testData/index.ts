@@ -74,12 +74,12 @@ export const correctlyExtractedHeaders1: Headers = [
 ];
 
 export const fullyMappedHeaders1: MappedHeaders = {
-  ["Started Date"]: "Date",
-  ["Description"]: "Title",
-  ["Amount"]: "Amount",
+  ["Started Date"]: "date",
+  ["Description"]: "title",
+  ["Amount"]: "amount",
 };
 
 export const partialMappedHeaders1: MappedHeaders = {
-  ["Started Date"]: "Date",
-  ["Description"]: "Title",
+  ["Started Date"]: "date",
+  ["Description"]: "title",
 };

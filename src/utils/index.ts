@@ -3,21 +3,20 @@ import { parseISO, parse as parseDate, isValid } from "date-fns";
 
 import {
   Category_Type,
-  CSV_Data,
-  CSV_Record,
   Generic_CSV_Data,
   Generic_CSV_Record,
   Headers,
   MappedHeaders,
+  Template_Columns,
+  Transaction,
 } from "../types";
 import {
   PreMappedTitles,
   TitleRecords,
 } from "@/features/import/components/steps/TitleMappingStep";
 import { normalizeTitle } from "./titleNormalization";
-import { DEFAULT_TITLE_MAP_FILE } from "@/constants";
-import { getJsonFileByName, readJsonFileContent } from "@/services/drive";
-import { createJsonFile } from "@/services/drive";
+import { Category_Enum, CATEGORY_LIST } from "@/constants";
+import { TitleMappedData } from "@/features/import/store/titleMappingSlice";
 
 export const extractHeaders = (obj: Generic_CSV_Record): Headers => {
   return [
@@ -59,16 +58,35 @@ export const parseAmount = (input: string): number => {
   return isNegative ? -parsed : parsed;
 };
 
+const transformValue = (
+  key: Template_Columns,
+  value: string
+): Category_Type | string | Date | number | undefined => {
+  switch (key) {
+    case "date":
+      return parseISO(value);
+    case "amount":
+      return parseAmount(value);
+    case "category":
+      const upperCaseValue = toUpperCaseWithUnderscores(value);
+      return CATEGORY_LIST.includes(upperCaseValue as Category_Type)
+        ? (upperCaseValue as Category_Type)
+        : undefined;
+    default:
+      return value;
+  }
+};
+
 export const mapRowWithHeaders = (
   parsedFile: Generic_CSV_Data,
   mappedHeaders: MappedHeaders
-): CSV_Data => {
-  const result: CSV_Data = [];
+): TitleMappedData => {
+  const result: TitleMappedData = [];
   for (const row of parsedFile) {
     if (checkIfRequiredColumnsExists(row, mappedHeaders)) {
-      const mappedRow = {} as CSV_Record;
+      const mappedRow = {} as Pick<Transaction, Template_Columns>;
       for (const [header, mappingHeader] of Object.entries(mappedHeaders)) {
-        if (mappingHeader === "Amount") {
+        if (mappingHeader === "amount") {
           const amountValue = parseAmount(row[header]);
           if (!mappedRow[mappingHeader]) {
             mappedRow[mappingHeader] = amountValue;
@@ -76,7 +94,8 @@ export const mapRowWithHeaders = (
             mappedRow[mappingHeader] += amountValue;
           }
         } else if (!mappedRow[mappingHeader]) {
-          mappedRow[mappingHeader] = row[header];
+          // @ts-ignore
+          mappedRow[mappingHeader] = transformValue(mappingHeader, row[header]);
         }
       }
       result.push(mappedRow);
@@ -85,14 +104,20 @@ export const mapRowWithHeaders = (
   return result;
 };
 
+// TODO: Add currency and accountId to the transaction
 export const mapRowWithCategory = (
-  titleMappedData: CSV_Data,
-  mappedTitles: PreMappedTitles
-): CSV_Data => {
+  titleMappedData: TitleMappedData,
+  mappedTitles: PreMappedTitles,
+  accountId: string,
+  currency: string
+): Omit<Transaction, "id" | "currency" | "userId">[] => {
   return titleMappedData.map((row) => {
     return {
       ...row,
-      Category: mappedTitles[normalizeTitle(row.Title as string)],
+      category: mappedTitles[normalizeTitle(row.title as string)],
+      year: row.date.getFullYear(),
+      accountId: accountId,
+      currency: currency,
     };
   });
 };
@@ -108,15 +133,15 @@ export const updatePreMappedTitles = (
 };
 
 export interface TransactionsByYear {
-  [year: number]: CSV_Data;
+  [year: number]: Transaction[];
 }
 
 export const groupTransactionsByYear = (
-  transactions: CSV_Data
+  transactions: Transaction[]
 ): TransactionsByYear => {
   return transactions.reduce((acc: TransactionsByYear, transaction) => {
     try {
-      const rawDate = transaction.Date as string;
+      const rawDate = transaction.date as unknown as string;
       let date = parseISO(rawDate);
 
       // If parseISO fails, try parse with common separators
@@ -130,10 +155,10 @@ export const groupTransactionsByYear = (
         acc[year] = acc[year] || [];
         acc[year].push(transaction);
       } else {
-        console.error(`Invalid date format: ${transaction.Date}`);
+        console.error(`Invalid date format: ${transaction.date}`);
       }
     } catch (error) {
-      console.error(`Failed to parse date: ${transaction.Date}`);
+      console.error(`Failed to parse date: ${transaction.date}`);
     }
     return acc;
   }, {});
@@ -141,7 +166,7 @@ export const groupTransactionsByYear = (
 
 export const getTitleRecords = (
   preMappedTitles: PreMappedTitles,
-  titleMappedData?: CSV_Data
+  titleMappedData?: TitleMappedData
 ) => {
   if (titleMappedData) {
     const _titleRecords: Record<
@@ -149,7 +174,7 @@ export const getTitleRecords = (
       { count: number; category: Category_Type }
     > = {};
     for (const row of titleMappedData) {
-      const normalizedTitle = normalizeTitle(row.Title as string);
+      const normalizedTitle = normalizeTitle(row.title as string);
       if (
         _titleRecords[normalizedTitle] &&
         _titleRecords[normalizedTitle].count
@@ -158,7 +183,8 @@ export const getTitleRecords = (
       } else {
         _titleRecords[normalizedTitle] = {
           count: 1,
-          category: preMappedTitles[normalizedTitle] ?? "Uncategorized",
+          category:
+            preMappedTitles[normalizedTitle] ?? Category_Enum.UNCATEGORIZED,
         };
       }
     }
@@ -174,33 +200,13 @@ export const getTitleRecords = (
   return [];
 };
 
-export const getPreMappedTitles = async (
-  rootFolderId: string
-): Promise<
-  | {
-      fileId: string;
-      data: PreMappedTitles;
-    }
-  | undefined
-> => {
-  const titleMapFileId = await getJsonFileByName(DEFAULT_TITLE_MAP_FILE);
-  if (titleMapFileId) {
-    const titleMap =
-      (await readJsonFileContent<PreMappedTitles>(titleMapFileId)) ?? {};
-    return {
-      fileId: titleMapFileId,
-      data: titleMap,
-    };
-  }
-  const newTitleMapFileId = await createJsonFile(
-    DEFAULT_TITLE_MAP_FILE,
-    {},
-    rootFolderId
-  );
-  if (newTitleMapFileId) {
-    return {
-      fileId: newTitleMapFileId,
-      data: {},
-    };
-  }
+export const toTitleCase = (str: string) => {
+  return str
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+export const toUpperCaseWithUnderscores = (str: string) => {
+  return str.replace(/ /g, "_").toUpperCase();
 };

@@ -1,15 +1,18 @@
-import { CSV_Data } from "@/types";
+import { Transaction } from "@/types";
 import { StateCreator } from "zustand";
 
+export type TitleMappedData = (Pick<Transaction, "title" | "amount" | "date"> &
+  Partial<Omit<Transaction, "title" | "amount" | "date">>)[];
+
 export interface TitleMappingSlice {
-  titleMappedData: CSV_Data | undefined;
-  setTitleMappedData: (data: CSV_Data) => void;
+  titleMappedData: TitleMappedData | undefined;
+  setTitleMappedData: (data: TitleMappedData | undefined) => void;
 }
 
 export const createTitleMappingSlice: StateCreator<TitleMappingSlice> = (
   set
 ) => ({
   titleMappedData: undefined,
-  setTitleMappedData: (data: CSV_Data) =>
+  setTitleMappedData: (data: TitleMappedData | undefined) =>
     set(() => ({ titleMappedData: data })),
 });

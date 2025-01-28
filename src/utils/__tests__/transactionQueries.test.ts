@@ -16,6 +16,7 @@ import * as transactionQueriesModule from "../transactionQueries";
 import { transactionService } from "../transactionQueries";
 import { db } from "../../firebase/config";
 import { Transaction } from "@/types";
+import { Category_Enum } from "@/constants";
 
 // First mock the modules
 jest.mock("firebase/firestore");
@@ -35,7 +36,7 @@ describe("transactionService", () => {
     amount: 100,
     currency: "USD",
     date: mockDate,
-    category: "Test",
+    category: Category_Enum.UNCATEGORIZED,
   };
 
   const mockTransactionWithId: Transaction = {
@@ -226,7 +227,7 @@ describe("transactionService", () => {
         amount: 100,
         currency: "USD",
         date: mockDate,
-        category: "Test",
+        category: Category_Enum.UNCATEGORIZED,
       };
 
       const result = await transactionService.isDuplicateTransaction(
@@ -317,7 +318,7 @@ describe("transactionService", () => {
             amount: 100,
             currency: "USD",
             date: mockDate,
-            category: "Test",
+            category: Category_Enum.UNCATEGORIZED,
           },
         ])
       ).rejects.toThrow(error);
