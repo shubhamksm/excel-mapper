@@ -64,7 +64,7 @@ const transformValue = (
 ): Category_Type | string | Date | number | undefined => {
   switch (key) {
     case "date":
-      return parseISO(value);
+      return sanitizeDate(value);
     case "amount":
       return parseAmount(value);
     case "category":
@@ -136,19 +136,22 @@ export interface TransactionsByYear {
   [year: number]: Transaction[];
 }
 
+export const sanitizeDate = (rawDate: string) => {
+  let date = parseISO(rawDate);
+  if (!isValid(date)) {
+    const cleanDate = rawDate.replace(/[./-]/g, "-");
+    date = parseDate(cleanDate, "dd-MM-yyyy", new Date());
+  }
+  return date;
+};
+
 export const groupTransactionsByYear = (
   transactions: Transaction[]
 ): TransactionsByYear => {
   return transactions.reduce((acc: TransactionsByYear, transaction) => {
     try {
       const rawDate = transaction.date as unknown as string;
-      let date = parseISO(rawDate);
-
-      // If parseISO fails, try parse with common separators
-      if (!isValid(date)) {
-        const cleanDate = rawDate.replace(/[./-]/g, "-");
-        date = parseDate(cleanDate, "dd-MM-yyyy", new Date());
-      }
+      let date = sanitizeDate(rawDate);
 
       if (isValid(date)) {
         const year = date.getFullYear();

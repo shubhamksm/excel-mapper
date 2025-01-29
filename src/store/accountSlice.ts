@@ -1,5 +1,5 @@
 import { StateCreator } from "zustand";
-import { Account } from "@/types";
+import { Account, AccountSubType, AccountType } from "@/types";
 
 export interface AccountSlice {
   accounts: Account[];
@@ -7,6 +7,19 @@ export interface AccountSlice {
 }
 
 export const createAccountSlice: StateCreator<AccountSlice> = (set) => ({
-  accounts: [],
+  // [TODO: Remove this]
+  accounts: [
+    {
+      id: "1",
+      userId: "1",
+      name: "Main",
+      currency: "NOK",
+      balance: 1000,
+      type: AccountType.MAIN,
+      subType: AccountSubType.SAVINGS,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
   setAccounts: (accounts: Account[]) => set(() => ({ accounts })),
 });
