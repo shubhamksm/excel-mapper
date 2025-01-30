@@ -130,9 +130,8 @@ export const TitleMappingStep = () => {
         accounts.find((account) => account.id === selectedAccountId)
           ?.currency ?? "NOK"
       );
-      // [TODO: Get all transactions for current user, and create a titleMapping]
       console.log(categoryMappedData);
-      // [TODO: Upload transactions to firebase]
+      // [TODO]: Category Mapped data is final now, upload to google drive
     }
   };
 

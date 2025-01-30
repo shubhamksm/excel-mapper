@@ -20,7 +20,6 @@ export enum ExcelMappingScreens {
 
 export interface Transaction {
   id: string;
-  userId: string;
   accountId: string;
   year: number;
   title: string;
@@ -35,15 +34,6 @@ export interface Transaction {
   linkedTransactionId?: string;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  displayName: string;
-  photoURL?: string;
-  createdAt: Date;
-  lastLoginAt: Date;
-}
-
 export enum AccountType {
   MAIN = "MAIN",
   PROXY = "PROXY",
@@ -54,15 +44,12 @@ export enum AccountSubType {
 }
 export interface Account {
   id: string;
-  userId: string;
   name: string;
   currency: string;
   balance: number;
   type: AccountType;
   subType: AccountSubType;
-  parentAccountId?: string; // if proxy account, then this links to the main account
-  createdAt: Date;
-  updatedAt: Date;
+  parentAccountId?: string;
 }
 
 // {

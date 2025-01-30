@@ -1,25 +1,18 @@
 import { Transaction } from "@/types";
 
 export class LocalTransactionProcessor {
-  private userId: string;
   private transactions: Transaction[] = [];
-
-  constructor(userId: string) {
-    this.userId = userId;
-  }
 
   processAndSaveTransactions(
     accountId: string,
     newTransactions: Omit<
       Transaction,
-      "id" | "userId" | "linkedTransactionId" | "accountId"
+      "id" | "linkedTransactionId" | "accountId"
     >[]
   ) {
-    // Generate unique transactions with user context
     const processedTransactions = newTransactions.map((transaction) => ({
       ...transaction,
-      id: this.generateTransactionId(),
-      userId: this.userId,
+      id: this.generateRandomId(),
       accountId,
     }));
 
@@ -32,8 +25,8 @@ export class LocalTransactionProcessor {
     return this.transactions;
   }
 
-  private generateTransactionId(): string {
-    return `trans_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  private generateRandomId(): string {
+    return `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   private isWithinFiveDays(date1: Date, date2: Date) {
@@ -99,7 +92,3 @@ export class LocalTransactionProcessor {
     return this.transactions.filter((t) => t.accountId === accountId);
   }
 }
-
-// Remove or comment out the test function and its execution
-// function testTransactionProcessor() { ... }
-// testTransactionProcessor();

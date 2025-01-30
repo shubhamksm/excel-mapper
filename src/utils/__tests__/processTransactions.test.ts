@@ -5,7 +5,7 @@ describe("LocalTransactionProcessor", () => {
   let processor: LocalTransactionProcessor;
 
   beforeEach(() => {
-    processor = new LocalTransactionProcessor("user_123");
+    processor = new LocalTransactionProcessor();
   });
 
   test("should process and link transactions correctly", () => {

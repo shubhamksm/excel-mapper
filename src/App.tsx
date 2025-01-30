@@ -7,6 +7,7 @@ import { createFolder } from "@/services/drive";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_FOLDER_NAME } from "@/constants";
 import { initClient, signIn } from "@/services/auth";
+import { initializeDriveSync } from "./database";
 
 const App = () => {
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
@@ -25,7 +26,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const checkFolderPresent = async () => {
+    const initializeApp = async () => {
       const folderId = await getFolderByName(DEFAULT_FOLDER_NAME);
       if (!folderId) {
         const newFolderId = await createFolder(DEFAULT_FOLDER_NAME);
@@ -33,9 +34,12 @@ const App = () => {
       } else {
         setRootFolderId(folderId);
       }
+      initializeDriveSync().catch((error) => {
+        console.error("Error initializing drive sync:", error);
+      });
     };
     if (isLoggedIn) {
-      checkFolderPresent();
+      initializeApp();
     }
   }, [isLoggedIn]);
 
