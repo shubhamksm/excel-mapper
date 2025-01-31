@@ -50,3 +50,19 @@ export const CATEGORY_LIST = [
 export const DEFAULT_FOLDER_NAME = "EXCEL_MAPPER";
 
 export const DEFAULT_TITLE_MAP_FILE = "TITLE_MAP.json";
+
+export const PathEnum = {
+  Dashboard: "/",
+  Accounts: "/accounts",
+  Transactions: "/transactions",
+  Budgets: "/budgets",
+  Goals: "/goals",
+} as const;
+
+export const Paths = {
+  [PathEnum.Dashboard]: "Dashboard",
+  [PathEnum.Accounts]: "Accounts",
+  [PathEnum.Transactions]: "Transactions",
+  [PathEnum.Budgets]: "Budgets",
+  [PathEnum.Goals]: "Goals",
+};

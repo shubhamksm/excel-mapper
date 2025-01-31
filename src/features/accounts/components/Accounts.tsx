@@ -1,3 +1,5 @@
+import { EmptyCard } from "@/components/ui/emptycard";
+
 export const Accounts = () => {
-  return <div>Accounts Page</div>;
+  return <EmptyCard />;
 };

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { useShallow } from "zustand/react/shallow";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router";
 import { getFolderByName, createFolder } from "@/services/drive";
 import { Button } from "@/components/ui/button";
-import { DEFAULT_FOLDER_NAME } from "@/constants";
+import { DEFAULT_FOLDER_NAME, PathEnum } from "@/constants";
 import { initClient, signIn } from "@/services/auth";
 import { initializeDriveSync } from "@/database";
 import { Dashboard } from "@/features/dashboard";
@@ -12,8 +12,9 @@ import { Accounts } from "@/features/accounts";
 import { Transactions } from "@/features/transactions";
 import { Budgets } from "@/features/budgets";
 import { Goals } from "@/features/goals";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "./components/layout/AppHeader";
 
 const App = () => {
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
@@ -64,13 +65,13 @@ const App = () => {
       <SidebarProvider>
         <AppSidebar />
         <main className="flex-1 p-6">
-          <SidebarTrigger />
+          <AppHeader />
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/accounts" element={<Accounts />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/budgets" element={<Budgets />} />
-            <Route path="/goals" element={<Goals />} />
+            <Route path={PathEnum.Dashboard} element={<Dashboard />} />
+            <Route path={PathEnum.Accounts} element={<Accounts />} />
+            <Route path={PathEnum.Transactions} element={<Transactions />} />
+            <Route path={PathEnum.Budgets} element={<Budgets />} />
+            <Route path={PathEnum.Goals} element={<Goals />} />
           </Routes>
         </main>
       </SidebarProvider>
