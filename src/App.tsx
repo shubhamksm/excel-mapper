@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { useShallow } from "zustand/react/shallow";
-import { ExcelImportModal } from "@/features/import/components/ExcelImportModal";
-import { getFolderByName } from "@/services/drive";
-import { createFolder } from "@/services/drive";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { getFolderByName, createFolder } from "@/services/drive";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_FOLDER_NAME } from "@/constants";
 import { initClient, signIn } from "@/services/auth";
-import { initializeDriveSync } from "./database";
+import { initializeDriveSync } from "@/database";
+import { Dashboard } from "@/features/dashboard";
+import { Accounts } from "@/features/accounts";
+import { Transactions } from "@/features/transactions";
+import { Budgets } from "@/features/budgets";
+import { Goals } from "@/features/goals";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 
 const App = () => {
   const [isLoggedIn, updateIsLoggedIn] = useState<boolean>(false);
@@ -43,18 +49,32 @@ const App = () => {
     }
   }, [isLoggedIn]);
 
-  return (
-    <div className="h-screen w-screen bg-slate-500 flex items-center justify-center">
-      <div className="p-4 h-2/3 w-2/3 bg-slate-50 rounded-md">
-        {!isLoggedIn ? (
-          <div className="w-full h-full flex flex-col justify-center items-center gap-y-4">
-            <Button onClick={() => signIn(updateIsLoggedIn)}>Login</Button>
-          </div>
-        ) : (
-          <ExcelImportModal />
-        )}
+  if (!isLoggedIn) {
+    return (
+      <div className="h-screen p-4 w-screen bg-slate-50">
+        <div className="w-full h-full flex flex-col justify-center items-center gap-y-4">
+          <Button onClick={() => signIn(updateIsLoggedIn)}>Login</Button>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <SidebarProvider>
+        <AppSidebar />
+        <main className="flex-1 p-6">
+          <SidebarTrigger />
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/budgets" element={<Budgets />} />
+            <Route path="/goals" element={<Goals />} />
+          </Routes>
+        </main>
+      </SidebarProvider>
+    </BrowserRouter>
   );
 };
 
