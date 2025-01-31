@@ -1,9 +1,8 @@
 import { Transaction } from "@/types";
+import { db } from "@/database";
 
-export class LocalTransactionProcessor {
-  private transactions: Transaction[] = [];
-
-  processAndSaveTransactions(
+export class TransactionProcessor {
+  async processAndSaveTransactions(
     accountId: string,
     newTransactions: Omit<
       Transaction,
@@ -12,29 +11,42 @@ export class LocalTransactionProcessor {
   ) {
     const processedTransactions = newTransactions.map((transaction) => ({
       ...transaction,
-      id: this.generateRandomId(),
+      id: this.generateTransactionId({
+        accountId,
+        date: transaction.date,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        year: transaction.year,
+      }),
       accountId,
     }));
 
-    // Save transactions locally
-    this.transactions.push(...processedTransactions);
+    await db.transactions.bulkAdd(processedTransactions);
+    await this.linkTransactions();
 
-    // Link transfer transactions
-    this.linkTransactions();
-
-    return this.transactions;
+    return processedTransactions;
   }
 
-  private generateRandomId(): string {
-    return `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  private generateTransactionId({
+    accountId,
+    date,
+    amount,
+    currency,
+    year,
+  }: {
+    accountId: string;
+    date: Date;
+    amount: number;
+    currency: string;
+    year: number;
+  }): string {
+    return `id_${accountId}_${date.getTime()}_${amount}_${currency}_${year}`;
   }
 
   private isWithinFiveDays(date1: Date, date2: Date) {
-    // @ts-ignore
-    const differenceInTime = Math.abs(date2 - date1); // Get the absolute difference in milliseconds
-    const differenceInDays = differenceInTime / (1000 * 60 * 60 * 24); // Convert milliseconds to days
-
-    return differenceInDays <= 5; // Return true if the difference is within 5 days
+    const differenceInTime = Math.abs(date2.getTime() - date1.getTime());
+    const differenceInDays = differenceInTime / (1000 * 60 * 60 * 24);
+    return differenceInDays <= 5;
   }
 
   private checkMultiCurrency(source: Transaction, target: Transaction) {
@@ -45,50 +57,71 @@ export class LocalTransactionProcessor {
           Math.abs(target.amount) === Math.abs(source.referenceAmount);
   }
 
-  private linkTransactions() {
-    // Fetch transfer transactions
-    const transferTransactions = this.transactions.filter(
-      (t) => t.referenceAccountId
-    );
+  private async linkTransactions() {
+    const transferTransactions = await db.transactions
+      .where("referenceAccountId")
+      .notEqual("")
+      .filter((t) => t.referenceAccountId !== undefined)
+      .toArray();
 
-    // Find and link transactions
+    const updates: Transaction[] = [];
+    const processedIds = new Set<string>();
+
     for (const transaction of transferTransactions) {
+      if (transaction.linkedTransactionId || processedIds.has(transaction.id))
+        continue;
+
       const matchingTransaction = transferTransactions.find(
         (t) =>
           t.accountId === transaction.referenceAccountId &&
           t.referenceAccountId === transaction.accountId &&
           t.id !== transaction.id &&
-          !transaction.linkedTransactionId &&
+          !t.linkedTransactionId &&
+          !processedIds.has(t.id) &&
           this.checkMultiCurrency(transaction, t)
       );
 
       if (matchingTransaction) {
-        // Update both transactions with linked IDs
-        transaction.linkedTransactionId = matchingTransaction.id;
-        matchingTransaction.linkedTransactionId = transaction.id;
-
         const transactionExchangeRate =
           transaction.amount !== 0
-            ? Math.abs(matchingTransaction.amount / transaction.amount)
+            ? Number(
+                Math.abs(
+                  matchingTransaction.amount / transaction.amount
+                ).toFixed(4)
+              )
             : 1;
 
         const matchingTransactionExchangeRate =
           matchingTransaction.amount !== 0
-            ? Math.abs(transaction.amount / matchingTransaction.amount)
+            ? Number(
+                Math.abs(
+                  transaction.amount / matchingTransaction.amount
+                ).toFixed(4)
+              )
             : 1;
 
-        transaction.exchangeRate = transactionExchangeRate;
-        matchingTransaction.exchangeRate = matchingTransactionExchangeRate;
+        processedIds.add(transaction.id);
+        processedIds.add(matchingTransaction.id);
+
+        updates.push(
+          {
+            ...transaction,
+            linkedTransactionId: matchingTransaction.id,
+            exchangeRate: transactionExchangeRate,
+          },
+          {
+            ...matchingTransaction,
+            linkedTransactionId: transaction.id,
+            exchangeRate: matchingTransactionExchangeRate,
+          }
+        );
       }
     }
-  }
 
-  // Utility methods for testing and retrieval
-  getTransactions(): Transaction[] {
-    return this.transactions;
-  }
-
-  getTransactionsByAccount(accountId: string): Transaction[] {
-    return this.transactions.filter((t) => t.accountId === accountId);
+    if (updates.length > 0) {
+      await db.transactions.bulkPut(updates);
+    }
   }
 }
+
+export const transactionProcessor = new TransactionProcessor();
