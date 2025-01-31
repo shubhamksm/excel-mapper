@@ -213,3 +213,10 @@ export const toTitleCase = (str: string) => {
 export const toUpperCaseWithUnderscores = (str: string) => {
   return str.replace(/ /g, "_").toUpperCase();
 };
+
+export const formatCurrency = (currency: string, amount: number) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(amount);
+};

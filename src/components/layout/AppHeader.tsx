@@ -6,7 +6,7 @@ export const AppHeader = () => {
   const location = useLocation();
 
   return (
-    <header className="flex items-center gap-x-2">
+    <header className="flex items-center gap-x-2 mb-6">
       <SidebarTrigger />
       <h1 className="text-2xl font-bold">
         {Paths[location.pathname as keyof typeof Paths]}

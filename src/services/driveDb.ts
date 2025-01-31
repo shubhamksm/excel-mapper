@@ -256,6 +256,9 @@ class DriveSync {
 
   // Set up auto-sync
   setupAutoSync(intervalMinutes = 5) {
+    this.backupToDrive().catch((error) => {
+      console.error("Initial backup failed:", error);
+    });
     setInterval(async () => {
       try {
         await this.backupToDrive();
