@@ -36,6 +36,7 @@ import * as z from "zod";
 import { useState } from "react";
 import { transactionProcessor } from "@/utils/processTransactions";
 import { CATEGORY_LIST } from "@/constants";
+import { ExcelImportModal } from "@/features/import/components/ExcelImportModal";
 
 const columns: ColumnDef<Transaction>[] = [
   {
@@ -109,7 +110,8 @@ export const Transactions = () => {
 
   return (
     <div className="flex flex-col gap-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-x-2">
+        <ExcelImportModal />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm">Add Transaction</Button>

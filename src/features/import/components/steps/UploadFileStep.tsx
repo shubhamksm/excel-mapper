@@ -1,11 +1,12 @@
-import { Input } from "@/components/ui/input";
 import { useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Page from "@/layouts/Page";
 import { useBoundStore } from "@/features/import/store/useBoundStore";
-import Papa from "papaparse";
-import { ExcelMappingScreens, Generic_CSV_Data } from "@/types";
+import { FileSpreadsheet, Upload } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
+import { Generic_CSV_Data } from "@/types";
+import Papa from "papaparse";
+import { ModalFooter } from "../ModalFooter";
 
 export const UploadFileStep = () => {
   const [rawFile, setRawFile] = useBoundStore(
@@ -13,9 +14,6 @@ export const UploadFileStep = () => {
   );
   const setParsedFile = useBoundStore(
     useShallow((state) => state.setParsedFile)
-  );
-  const changeCurrentScreen = useBoundStore(
-    useShallow((state) => state.changeCurrentScreen)
   );
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,7 +31,6 @@ export const UploadFileStep = () => {
             throw new Error("No data found in the file");
           }
           setParsedFile(data as Generic_CSV_Data);
-          changeCurrentScreen(ExcelMappingScreens.HEADER_MAPPING);
         },
       });
   };
@@ -47,32 +44,52 @@ export const UploadFileStep = () => {
   }, [rawFile]);
 
   return (
-    <Page
-      title="Upload File"
-      nextLabel="Next"
-      nextButtonProps={{
-        onClick: () => {
-          handleUpload();
-        },
-        disabled: !rawFile,
-      }}
-    >
-      <div className="flex w-2/3 mx-auto items-center gap-1.5">
-        <Input
-          ref={inputRef}
-          type="file"
-          onChange={(e) =>
-            setRawFile(e.target.files ? e.target.files[0] : undefined)
-          }
-        />
-        <Button
-          onClick={handleRemove}
-          variant={"destructive"}
-          disabled={!rawFile}
-        >
-          Remove File
-        </Button>
+    <>
+      <div className="space-y-4 h-full flex-1 overflow-y-auto w-full">
+        <p className="text-sm text-muted-foreground text-center">
+          Upload your CSV or Excel file to get started.
+        </p>
+        {rawFile ? (
+          <div className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70">
+            <FileSpreadsheet className="w-10 h-10 mb-3 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-between w-full">
+              <p className="mb-2 text-sm text-muted-foreground">
+                {rawFile.name}
+              </p>
+              <Button onClick={handleRemove} variant="destructive" size="sm">
+                Remove
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <label
+            htmlFor="dropzone-file"
+            className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70"
+          >
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+              <p className="mb-2 text-sm text-muted-foreground">
+                <span className="font-semibold">Click to upload</span> or drag
+                and drop
+              </p>
+              <p className="text-xs text-muted-foreground">
+                CSV or Excel file (MAX. 10MB)
+              </p>
+            </div>
+            <Input
+              ref={inputRef}
+              id="dropzone-file"
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                setRawFile(e.target.files ? e.target.files[0] : undefined);
+              }}
+              accept=".csv,.xlsx,.xls"
+            />
+          </label>
+        )}
       </div>
-    </Page>
+      <ModalFooter isNextDisabled={!rawFile} onNext={handleUpload} />
+    </>
   );
 };

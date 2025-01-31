@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -5,28 +6,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Category_Enum, CATEGORY_LIST } from "@/constants";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/containers/DataTable";
-import Page from "@/layouts/Page";
-// import { sortAndDivideTransactions } from "@/services/drive";
 import { useBoundStore } from "@/features/import/store/useBoundStore";
-import { Category_Type } from "@/types";
+import type { Category_Type } from "@/types";
 import {
-  // getPreMappedTitles,
   getTitleRecords,
   mapRowWithCategory,
-  updatePreMappedTitles,
   toTitleCase,
+  updatePreMappedTitles,
 } from "@/utils";
-import { useEffect, useState } from "react";
-import { useShallow } from "zustand/shallow";
-import { ColumnDef } from "@tanstack/react-table";
-import React from "react";
+import { CATEGORY_LIST } from "@/constants";
 import { Loader2, Wand2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { CategoryMappingService } from "@/features/import/services";
-import { useAppStore } from "@/store/useAppStore";
+import { ColumnDef } from "@tanstack/react-table";
+import { useShallow } from "zustand/react/shallow";
+import { ModalFooter } from "../ModalFooter";
+import { db } from "@/database";
+import { useLiveQuery } from "dexie-react-hooks";
+import React from "react";
+import { transactionProcessor } from "@/utils/processTransactions";
 
 export type TitleRecords = {
   title: string;
@@ -58,23 +57,23 @@ const columns: ColumnDef<TitleRecords>[] = [
     header: "Category",
     cell: ({ getValue, row: { index }, column: { id }, table }) => {
       const initialValue = getValue<string>();
-      const [value, setValue] = React.useState(initialValue);
+      const [value, setValue] = useState(initialValue);
 
-      React.useEffect(() => {
+      useEffect(() => {
         setValue(initialValue);
       }, [initialValue]);
 
       return (
         <Select
+          value={value}
           onValueChange={(category: Category_Type) => {
             // @ts-ignore
             table.options.meta?.updateData(index, id, category);
             setValue(category);
           }}
-          value={value}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Add Mapping" />
+            <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>{OptionsFromDefaultCategory}</SelectContent>
         </Select>
@@ -99,132 +98,92 @@ function useSkipper() {
 }
 
 export const TitleMappingStep = () => {
-  const titleMappedData = useBoundStore(
-    useShallow((state) => state.titleMappedData)
+  const [titleMappedData, setTitleMappedData] = useBoundStore(
+    useShallow((state) => [state.titleMappedData, state.setTitleMappedData])
   );
-  const rootFolderId = useAppStore(useShallow((state) => state.rootFolderId));
-  const accounts = useAppStore(useShallow((state) => state.accounts));
-  const [preMappedTitles, setPreMappedTitles] = useState<PreMappedTitles>({});
-  // const [isLoading, setIsLoading] = useState(false);
+  const accounts = useLiveQuery(() => db.accounts.toArray());
   const [selectedAccountId, setSelectedAccountId] = useState<
     string | undefined
   >(undefined);
-  const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
-  const [isGeminiLoading, setIsGeminiLoading] = useState<boolean>(false);
-  const categoryMappingService = new CategoryMappingService();
-
   const [titleRecords, setTitleRecords] = useState<TitleRecords[]>([]);
+  const [isAutoAssigning, setIsAutoAssigning] = useState(false);
+  const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
+
+  useEffect(() => {
+    if (titleMappedData) {
+      skipAutoResetPageIndex();
+      setTitleRecords(getTitleRecords({}, titleMappedData));
+    }
+  }, [titleMappedData]);
+
+  const handleAutoAssign = async () => {
+    setIsAutoAssigning(true);
+    const categoryMappingService = new CategoryMappingService();
+    const mapping = await categoryMappingService.getCategoryMapping(
+      titleRecords
+    );
+    const updatedTitleRecords = titleRecords.map((record) => ({
+      ...record,
+      category: mapping[record.title] || record.category,
+    }));
+    setTitleRecords(updatedTitleRecords);
+    setIsAutoAssigning(false);
+  };
 
   const handleNext = async () => {
-    if (
-      titleMappedData &&
-      // preMappedTitlesFileId &&
-      // rootFolderId &&
-      selectedAccountId
-    ) {
+    if (titleMappedData && accounts && selectedAccountId) {
       const updatedPreMappedTitles = updatePreMappedTitles(titleRecords);
       const categoryMappedData = mapRowWithCategory(
         titleMappedData,
         updatedPreMappedTitles,
-        selectedAccountId,
         accounts.find((account) => account.id === selectedAccountId)
           ?.currency ?? "NOK"
       );
       console.log(categoryMappedData);
+      await transactionProcessor.processAndSaveTransactions(
+        selectedAccountId,
+        categoryMappedData
+      );
       // [TODO]: Category Mapped data is final now, upload to google drive
     }
   };
 
-  // useEffect(() => {
-  //   const prepareData = async () => {
-  //     if (rootFolderId) {
-  //       const response = await getPreMappedTitles(rootFolderId);
-  //       if (response) {
-  //         setPreMappedTitles(response.data ?? {});
-  //         setIsLoading(false);
-  //       }
-  //     }
-  //   };
-  //   prepareData();
-  // }, []);
-
-  useEffect(() => {
-    if (titleMappedData && preMappedTitles) {
-      skipAutoResetPageIndex();
-      setTitleRecords(getTitleRecords(preMappedTitles, titleMappedData));
-    }
-  }, [preMappedTitles, titleMappedData]);
-
-  const getMappingWithAI = async () => {
-    if (titleRecords && preMappedTitles) {
-      setIsGeminiLoading(true);
-      const mapping = await categoryMappingService.getCategoryMapping(
-        titleRecords
-      );
-      const mergedMapping: PreMappedTitles = {};
-      for (const key of Object.keys(mapping)) {
-        mergedMapping[key] =
-          preMappedTitles[key] !== Category_Enum.UNCATEGORIZED &&
-          preMappedTitles[key] !== undefined
-            ? preMappedTitles[key]
-            : mapping[key];
-      }
-      setPreMappedTitles(mergedMapping);
-      setIsGeminiLoading(false);
-    }
-  };
-
   return (
-    <Page
-      title="Title Mapping"
-      nextLabel="Finish"
-      nextButtonProps={{
-        onClick: handleNext,
-        disabled: selectedAccountId === undefined,
-      }}
-      previousLabel="Previous"
-    >
-      {!titleMappedData ? (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-[250px]" />
-          <Skeleton className="h-4 w-[250px]" />
+    <>
+      <div className="space-y-4 h-full flex flex-col flex-1 w-full overflow-y-hidden">
+        <p className="text-sm text-muted-foreground text-center">
+          Assign categories to your transaction titles.
+        </p>
+        <div className="flex justify-between gap-x-4 items-center">
+          <Select
+            onValueChange={(value) => {
+              setSelectedAccountId(value);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Account for Transaction" />
+            </SelectTrigger>
+            <SelectContent>
+              {accounts?.map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleAutoAssign} disabled={isAutoAssigning}>
+            {isAutoAssigning ? (
+              <Loader2 className="animate-spin w-4 h-4 mr-2" />
+            ) : (
+              <Wand2 className="w-4 h-4 mr-2" />
+            )}
+            Auto Assign
+          </Button>
         </div>
-      ) : (
-        <div>
-          <div className="flex justify-between w-full">
-            <Select
-              onValueChange={(value) => {
-                setSelectedAccountId(value);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={getMappingWithAI}
-              disabled={isGeminiLoading}
-              size={"xs"}
-              className="bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transform transition duration-500 hover:scale-101"
-            >
-              {isGeminiLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Wand2 />
-              )}
-              Auto Assign Categories
-            </Button>
-          </div>
+        <div className="overflow-y-auto flex-1">
           <DataTable
-            data={titleRecords}
             columns={columns}
+            data={titleRecords}
             tableOptions={{
               autoResetPageIndex,
               meta: {
@@ -250,7 +209,8 @@ export const TitleMappingStep = () => {
             }}
           />
         </div>
-      )}
-    </Page>
+      </div>
+      <ModalFooter isNextDisabled={!selectedAccountId} onNext={handleNext} />
+    </>
   );
 };

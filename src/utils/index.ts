@@ -108,15 +108,13 @@ export const mapRowWithHeaders = (
 export const mapRowWithCategory = (
   titleMappedData: TitleMappedData,
   mappedTitles: PreMappedTitles,
-  accountId: string,
   currency: string
-): Omit<Transaction, "id" | "currency" | "userId">[] => {
+): Omit<Transaction, "id" | "userId" | "accountId">[] => {
   return titleMappedData.map((row) => {
     return {
       ...row,
       category: mappedTitles[normalizeTitle(row.title as string)],
       year: row.date.getFullYear(),
-      accountId: accountId,
       currency: currency,
     };
   });
