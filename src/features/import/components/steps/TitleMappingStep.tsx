@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -9,14 +9,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/containers/DataTable";
 import { useBoundStore } from "@/features/import/store/useBoundStore";
-import type { Category_Type } from "@/types";
+import type { Account, Category_Type } from "@/types";
 import {
   getTitleRecords,
   mapRowWithCategory,
   toTitleCase,
-  updatePreMappedTitles,
+  updateTitleMappingWithCategoryAndReferenceAccountId,
 } from "@/utils";
-import { CATEGORY_LIST } from "@/constants";
+import { Category_Enum, CATEGORY_LIST } from "@/constants";
 import { Loader2, Wand2 } from "lucide-react";
 import { CategoryMappingService } from "@/features/import/services";
 import { ColumnDef } from "@tanstack/react-table";
@@ -31,6 +31,7 @@ export type TitleRecords = {
   title: string;
   category: Category_Type;
   count: number;
+  referenceAccountId?: string;
 };
 
 export type PreMappedTitles = Record<string, Category_Type>;
@@ -43,7 +44,7 @@ const OptionsFromDefaultCategory = CATEGORY_LIST.map((name) => {
   );
 });
 
-const columns: ColumnDef<TitleRecords>[] = [
+const getColumns = (accounts: Account[]): ColumnDef<TitleRecords>[] => [
   {
     accessorKey: "title",
     header: "Title",
@@ -55,7 +56,7 @@ const columns: ColumnDef<TitleRecords>[] = [
   {
     accessorKey: "category",
     header: "Category",
-    cell: ({ getValue, row: { index }, column: { id }, table }) => {
+    cell: ({ getValue, row: { index, ...restRow }, column: { id }, table }) => {
       const initialValue = getValue<string>();
       const [value, setValue] = useState(initialValue);
 
@@ -64,19 +65,45 @@ const columns: ColumnDef<TitleRecords>[] = [
       }, [initialValue]);
 
       return (
-        <Select
-          value={value}
-          onValueChange={(category: Category_Type) => {
-            // @ts-ignore
-            table.options.meta?.updateData(index, id, category);
-            setValue(category);
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>{OptionsFromDefaultCategory}</SelectContent>
-        </Select>
+        <>
+          <Select
+            value={value}
+            onValueChange={(category: Category_Type) => {
+              // @ts-ignore
+              table.options.meta?.updateData(index, id, category);
+              setValue(category);
+            }}
+          >
+            <SelectTrigger className="min-w-[150px]">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>{OptionsFromDefaultCategory}</SelectContent>
+          </Select>
+          {value === Category_Enum.BALANCE_CORRECTION && (
+            <Select
+              onValueChange={(value) => {
+                // @ts-ignore
+                table.options.meta?.updateData(
+                  index,
+                  "referenceAccountId",
+                  value
+                );
+              }}
+              value={restRow.original.referenceAccountId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts?.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </>
       );
     },
   },
@@ -108,6 +135,13 @@ export const TitleMappingStep = () => {
   const [titleRecords, setTitleRecords] = useState<TitleRecords[]>([]);
   const [isAutoAssigning, setIsAutoAssigning] = useState(false);
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper();
+  const columns = useMemo(
+    () =>
+      getColumns(
+        accounts?.filter((account) => account.id !== selectedAccountId) ?? []
+      ),
+    [accounts, selectedAccountId]
+  );
 
   useEffect(() => {
     if (titleMappedData) {
@@ -132,18 +166,21 @@ export const TitleMappingStep = () => {
 
   const handleNext = async () => {
     if (titleMappedData && accounts && selectedAccountId) {
-      const updatedPreMappedTitles = updatePreMappedTitles(titleRecords);
+      const { categoryMapping, referenceAccountMapping } =
+        updateTitleMappingWithCategoryAndReferenceAccountId(titleRecords);
+      console.log("titleMappedData before mapping :: ", titleRecords);
       const categoryMappedData = mapRowWithCategory(
         titleMappedData,
-        updatedPreMappedTitles,
+        categoryMapping,
+        referenceAccountMapping,
         accounts.find((account) => account.id === selectedAccountId)
           ?.currency ?? "NOK"
       );
-      console.log(categoryMappedData);
-      await transactionProcessor.processAndSaveTransactions(
-        selectedAccountId,
-        categoryMappedData
-      );
+      console.log("categoryMappedData after mapping :: ", categoryMappedData);
+      // await transactionProcessor.processAndSaveTransactions(
+      //   selectedAccountId,
+      //   categoryMappedData
+      // );
       // [TODO]: Category Mapped data is final now, upload to google drive
     }
   };
@@ -180,35 +217,48 @@ export const TitleMappingStep = () => {
             Auto Assign
           </Button>
         </div>
-        <div className="overflow-y-auto flex-1">
-          <DataTable
-            columns={columns}
-            data={titleRecords}
-            tableOptions={{
-              autoResetPageIndex,
-              meta: {
-                updateData: (
-                  rowIndex: number,
-                  columnId: string,
-                  value: string
-                ) => {
-                  skipAutoResetPageIndex();
-                  setTitleRecords((old) =>
-                    old.map((row, index) => {
-                      if (index === rowIndex) {
-                        return {
-                          ...old[rowIndex]!,
-                          [columnId]: value,
-                        };
-                      }
-                      return row;
-                    })
-                  );
+        {selectedAccountId && accounts ? (
+          <div className="overflow-y-auto flex-1">
+            <DataTable
+              columns={columns}
+              data={titleRecords}
+              tableOptions={{
+                autoResetPageIndex,
+                meta: {
+                  updateData: (
+                    rowIndex: number,
+                    columnId: string,
+                    value: string
+                  ) => {
+                    skipAutoResetPageIndex();
+                    setTitleRecords((old) =>
+                      old.map((row, index) => {
+                        if (index === rowIndex) {
+                          console.log("Updating row :: ", {
+                            rowIndex,
+                            columnId,
+                            value,
+                            oldValue:
+                              old[rowIndex]?.[columnId as keyof TitleRecords],
+                          });
+                          return {
+                            ...old[rowIndex]!,
+                            [columnId]: value,
+                          };
+                        }
+                        return row;
+                      })
+                    );
+                  },
                 },
-              },
-            }}
-          />
-        </div>
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-full">
+            Select an account to continue
+          </div>
+        )}
       </div>
       <ModalFooter isNextDisabled={!selectedAccountId} onNext={handleNext} />
     </>

@@ -3,7 +3,10 @@ import { CATEGORY_LIST, TEMPLATE_COLUMNS } from "./constants";
 export type StateAction<T> = React.Dispatch<React.SetStateAction<T>>;
 
 export type Headers = string[];
-export type MappedHeaders = Record<string, Template_Columns>;
+export type MappedHeaders = Record<
+  string,
+  { column: Template_Columns; debitOrCredit?: "debit" | "credit" | "both" }
+>;
 
 export type Template_Columns = (typeof TEMPLATE_COLUMNS)[number];
 

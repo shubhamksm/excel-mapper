@@ -85,9 +85,17 @@ export const mapRowWithHeaders = (
   for (const row of parsedFile) {
     if (checkIfRequiredColumnsExists(row, mappedHeaders)) {
       const mappedRow = {} as Pick<Transaction, Template_Columns>;
-      for (const [header, mappingHeader] of Object.entries(mappedHeaders)) {
+      for (const [
+        header,
+        { column: mappingHeader, debitOrCredit },
+      ] of Object.entries(mappedHeaders)) {
         if (mappingHeader === "amount") {
-          const amountValue = parseAmount(row[header]);
+          let amountValue = parseAmount(row[header]);
+          if (debitOrCredit === "debit") {
+            amountValue = -amountValue;
+          } else if (debitOrCredit === "credit") {
+            amountValue = amountValue;
+          }
           if (!mappedRow[mappingHeader]) {
             mappedRow[mappingHeader] = amountValue;
           } else if (typeof mappedRow[mappingHeader] === "number") {
@@ -107,27 +115,35 @@ export const mapRowWithHeaders = (
 // TODO: Add currency and accountId to the transaction
 export const mapRowWithCategory = (
   titleMappedData: TitleMappedData,
-  mappedTitles: PreMappedTitles,
+  categoryMapping: PreMappedTitles,
+  referenceAccountMapping: Record<string, string | undefined>,
   currency: string
 ): Omit<Transaction, "id" | "userId" | "accountId">[] => {
   return titleMappedData.map((row) => {
     return {
       ...row,
-      category: mappedTitles[normalizeTitle(row.title as string)],
+      category: categoryMapping[normalizeTitle(row.title as string)],
+      referenceAccountId:
+        referenceAccountMapping[normalizeTitle(row.title as string)],
       year: row.date.getFullYear(),
       currency: currency,
     };
   });
 };
 
-export const updatePreMappedTitles = (
+export const updateTitleMappingWithCategoryAndReferenceAccountId = (
   titleRecords: TitleRecords[]
-): PreMappedTitles => {
-  const preMappedTitles: PreMappedTitles = {};
+): {
+  categoryMapping: PreMappedTitles;
+  referenceAccountMapping: Record<string, string | undefined>;
+} => {
+  const categoryMapping: PreMappedTitles = {};
+  const referenceAccountMapping: Record<string, string | undefined> = {};
   titleRecords.forEach((record) => {
-    preMappedTitles[record.title] = record.category;
+    categoryMapping[record.title] = record.category;
+    referenceAccountMapping[record.title] = record.referenceAccountId;
   });
-  return preMappedTitles;
+  return { categoryMapping, referenceAccountMapping };
 };
 
 export interface TransactionsByYear {
