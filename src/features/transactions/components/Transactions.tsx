@@ -37,10 +37,21 @@ import { useState } from "react";
 import { transactionProcessor } from "@/utils/processTransactions";
 import { CATEGORY_LIST } from "@/constants";
 import { ExcelImportModal } from "@/features/import/components/ExcelImportModal";
+import { ArrowUpDown } from "lucide-react";
 
 const columns: ColumnDef<Transaction>[] = [
   {
-    header: "Date",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     accessorKey: "date",
     cell: ({ row }) => new Date(row.original.date).toLocaleDateString(),
   },

@@ -17,11 +17,16 @@ export class TransactionProcessor {
         amount: transaction.amount,
         currency: transaction.currency,
         year: transaction.year,
+        title: transaction.title,
       }),
       accountId,
     }));
 
-    await db.transactions.bulkAdd(processedTransactions);
+    try {
+      await db.transactions.bulkAdd(processedTransactions);
+    } catch (error) {
+      console.error("Failed to bulk add transactions:", error);
+    }
     await this.linkTransactions();
 
     return processedTransactions;
@@ -33,14 +38,16 @@ export class TransactionProcessor {
     amount,
     currency,
     year,
+    title,
   }: {
     accountId: string;
     date: Date;
     amount: number;
     currency: string;
     year: number;
+    title: string;
   }): string {
-    return `id_${accountId}_${date.getTime()}_${amount}_${currency}_${year}`;
+    return `id_${accountId}_${date.getTime()}_${amount}_${currency}_${year}_${title}`;
   }
 
   private isWithinFiveDays(date1: Date, date2: Date) {

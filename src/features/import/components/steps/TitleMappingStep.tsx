@@ -168,7 +168,6 @@ export const TitleMappingStep = () => {
     if (titleMappedData && accounts && selectedAccountId) {
       const { categoryMapping, referenceAccountMapping } =
         updateTitleMappingWithCategoryAndReferenceAccountId(titleRecords);
-      console.log("titleMappedData before mapping :: ", titleRecords);
       const categoryMappedData = mapRowWithCategory(
         titleMappedData,
         categoryMapping,
@@ -176,11 +175,10 @@ export const TitleMappingStep = () => {
         accounts.find((account) => account.id === selectedAccountId)
           ?.currency ?? "NOK"
       );
-      console.log("categoryMappedData after mapping :: ", categoryMappedData);
-      // await transactionProcessor.processAndSaveTransactions(
-      //   selectedAccountId,
-      //   categoryMappedData
-      // );
+      await transactionProcessor.processAndSaveTransactions(
+        selectedAccountId,
+        categoryMappedData
+      );
       // [TODO]: Category Mapped data is final now, upload to google drive
     }
   };
@@ -234,13 +232,6 @@ export const TitleMappingStep = () => {
                     setTitleRecords((old) =>
                       old.map((row, index) => {
                         if (index === rowIndex) {
-                          console.log("Updating row :: ", {
-                            rowIndex,
-                            columnId,
-                            value,
-                            oldValue:
-                              old[rowIndex]?.[columnId as keyof TitleRecords],
-                          });
                           return {
                             ...old[rowIndex]!,
                             [columnId]: value,
