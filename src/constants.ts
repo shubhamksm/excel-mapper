@@ -28,6 +28,13 @@ export enum Category_Enum {
   UNCATEGORIZED = "UNCATEGORIZED",
 }
 
+export enum Currency_Enum {
+  NOK = "NOK",
+  INR = "INR",
+  EUR = "EUR",
+  USD = "USD",
+}
+
 export const CATEGORY_LIST = [
   "GROCERIES",
   "NON_GROCERIES",
