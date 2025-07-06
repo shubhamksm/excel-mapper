@@ -14,11 +14,7 @@ import {
   fullyMappedHeaders1,
   partialMappedHeaders1,
 } from "@/testData";
-import {
-  PreMappedTitles,
-  TitleRecords,
-} from "@/features/import/components/steps/TitleMappingStep";
-import { normalizeTitle } from "../titleNormalization";
+import { PreMappedTitles } from "@/features/import/components/steps/TitleMappingStep";
 import { Category_Enum } from "@/constants";
 import { TitleMappedData } from "@/features/import/store/titleMappingSlice";
 
@@ -129,7 +125,7 @@ describe("Utils", () => {
     const mockTitleMappedData = [
       {
         date: new Date("2022-10-04"),
-        title: "Card Top-Up",
+        title: "CARD TOP UP",
         amount: 83.99,
       },
       {
@@ -140,13 +136,13 @@ describe("Utils", () => {
     ] as TitleMappedData;
 
     const mockPreMappedTitles: PreMappedTitles = {
-      "Card Top-Up": Category_Enum.INCOME,
-      "REMA 1000": Category_Enum.GROCERIES,
+      "CARD TOP UP": Category_Enum.INCOME,
+      REMA: Category_Enum.GROCERIES,
     };
 
     const mockReferenceAccountMapping: Record<string, string | undefined> = {
-      "Card Top-Up": "account1",
-      "REMA 1000": "account2",
+      "CARD TOP UP": "account1",
+      REMA: "account2",
     };
 
     it("should map categories correctly to each row", () => {
@@ -172,7 +168,7 @@ describe("Utils", () => {
 
       expect(result[0]).toEqual({
         date: new Date("2022-10-04"),
-        title: "Card Top-Up",
+        title: "CARD TOP UP",
         amount: 83.99,
         category: Category_Enum.INCOME,
         referenceAccountId: "account1",

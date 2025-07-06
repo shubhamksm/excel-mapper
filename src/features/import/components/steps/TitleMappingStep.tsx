@@ -125,7 +125,7 @@ function useSkipper() {
 }
 
 export const TitleMappingStep = () => {
-  const [titleMappedData, setTitleMappedData] = useBoundStore(
+  const [titleMappedData] = useBoundStore(
     useShallow((state) => [state.titleMappedData, state.setTitleMappedData])
   );
   const accounts = useLiveQuery(() => db.accounts.toArray());

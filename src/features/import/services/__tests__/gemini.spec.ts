@@ -16,7 +16,6 @@ describe("CategoryMappingService", () => {
   let mockGenerateContent: jest.Mock;
 
   beforeEach(() => {
-    service = new CategoryMappingService();
     mockGenerateContent = jest.fn();
     const { GoogleGenerativeAI } = require("@google/generative-ai");
     GoogleGenerativeAI.mockImplementation(() => ({
@@ -24,6 +23,7 @@ describe("CategoryMappingService", () => {
         generateContent: mockGenerateContent,
       }),
     }));
+    service = new CategoryMappingService();
   });
 
   it("should process transactions and return category mappings", async () => {

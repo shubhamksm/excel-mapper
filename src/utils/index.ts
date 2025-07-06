@@ -164,8 +164,15 @@ export const groupTransactionsByYear = (
 ): TransactionsByYear => {
   return transactions.reduce((acc: TransactionsByYear, transaction) => {
     try {
-      const rawDate = transaction.date as unknown as string;
-      let date = sanitizeDate(rawDate);
+      let date: Date;
+
+      // Handle both Date objects and string dates
+      if (transaction.date instanceof Date) {
+        date = transaction.date;
+      } else {
+        const rawDate = transaction.date as string;
+        date = sanitizeDate(rawDate);
+      }
 
       if (isValid(date)) {
         const year = date.getFullYear();

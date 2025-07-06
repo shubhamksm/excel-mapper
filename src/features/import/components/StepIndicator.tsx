@@ -8,7 +8,7 @@ interface StepIndicatorProps {
 export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
   return (
     <div className="flex items-center justify-center w-full py-4">
-      {steps.map((step, index) => (
+      {steps.map((_, index) => (
         <div key={index} className="flex items-center">
           <div
             className={cn(

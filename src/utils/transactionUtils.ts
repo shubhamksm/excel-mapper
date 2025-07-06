@@ -48,7 +48,6 @@ export const updateTransactionCategory = async (
         updatedCount++;
       } catch (error) {
         const errorMsg = `Failed to update transaction ${txn.id}: ${error}`;
-        console.error(errorMsg);
         result.errors.push(errorMsg);
       }
     }
@@ -56,14 +55,9 @@ export const updateTransactionCategory = async (
     result.updatedCount = updatedCount;
     result.success = true;
 
-    console.log(
-      `Updated ${updatedCount} transactions with title "${transactionTitle}" to category "${newCategory}"`
-    );
-
     return result;
   } catch (error) {
     const errorMsg = `Category update failed: ${error}`;
-    console.error(errorMsg);
     result.errors.push(errorMsg);
     return result;
   }
@@ -93,7 +87,6 @@ export const getTransactionTitleStats = async (transactionId: string) => {
       transactions: transactionsWithSameTitle,
     };
   } catch (error) {
-    console.error("Failed to get transaction title stats:", error);
     throw error;
   }
 };
@@ -126,7 +119,6 @@ export const getAllTransactionTitles = async () => {
 
     return Array.from(titleMap.values()).sort((a, b) => b.count - a.count);
   } catch (error) {
-    console.error("Failed to get all transaction titles:", error);
     throw error;
   }
 };
