@@ -200,8 +200,7 @@ export const getTitleRecords = (
       } else {
         _titleRecords[normalizedTitle] = {
           count: 1,
-          category:
-            preMappedTitles[normalizedTitle] ?? Category_Enum.UNCATEGORIZED,
+          category: preMappedTitles[normalizedTitle] ?? Category_Enum.EXTRAS,
         };
       }
     }

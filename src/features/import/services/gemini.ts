@@ -54,11 +54,8 @@ export class CategoryMappingService {
             {
               text: `Help categorize the transaction descriptions. 
             **Only Respond by Calling categorize_transactions function**
-            *Important* Only use these categories: ${CATEGORY_LIST.filter(
-              (t) => t !== Category_Enum.UNCATEGORIZED
-            ).join(", ")}. 
+            *Important* Only use these categories: ${CATEGORY_LIST.join(", ")}. 
             Be precise and consistent in your categorization. 
-            If description contains any name assign those to Personal Category, 
             Here's the transactions list: ${transactions
               .map((t) => t.title)
               .join(",\n")}`,
@@ -110,7 +107,7 @@ export class CategoryMappingService {
     }
 
     const batchToProcess = transactions.filter(
-      (t) => t.category === Category_Enum.UNCATEGORIZED
+      (t) => t.category === Category_Enum.EXTRAS
     );
 
     try {

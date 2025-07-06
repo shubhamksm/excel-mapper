@@ -4,7 +4,6 @@ import {
   checkIfRequiredColumnsExists,
   mapRowWithHeaders,
   mapRowWithCategory,
-  updatePreMappedTitles,
   parseAmount,
   groupTransactionsByYear,
 } from "../index";
@@ -59,7 +58,7 @@ describe("Utils", () => {
 
     it("should return false when required columns are missing", () => {
       const invalidMappedHeaders: MappedHeaders = {
-        NonExistentColumn: "date",
+        NonExistentColumn: { column: "date" },
       };
       const result = checkIfRequiredColumnsExists(
         genericCSVRecord1,
@@ -140,16 +139,21 @@ describe("Utils", () => {
       },
     ] as TitleMappedData;
 
-    const mockTitleRecords: PreMappedTitles = {
-      [normalizeTitle("Card Top-Up")]: Category_Enum.INCOME,
-      [normalizeTitle("REMA 1000")]: Category_Enum.GROCERIES,
+    const mockPreMappedTitles: PreMappedTitles = {
+      "Card Top-Up": Category_Enum.INCOME,
+      "REMA 1000": Category_Enum.GROCERIES,
+    };
+
+    const mockReferenceAccountMapping: Record<string, string | undefined> = {
+      "Card Top-Up": "account1",
+      "REMA 1000": "account2",
     };
 
     it("should map categories correctly to each row", () => {
       const result = mapRowWithCategory(
         mockTitleMappedData,
-        mockTitleRecords,
-        "account1",
+        mockPreMappedTitles,
+        mockReferenceAccountMapping,
         "NOK"
       );
 
@@ -161,8 +165,8 @@ describe("Utils", () => {
     it("should preserve existing row data while adding category", () => {
       const result = mapRowWithCategory(
         mockTitleMappedData,
-        mockTitleRecords,
-        "account1",
+        mockPreMappedTitles,
+        mockReferenceAccountMapping,
         "NOK"
       );
 
@@ -171,7 +175,7 @@ describe("Utils", () => {
         title: "Card Top-Up",
         amount: 83.99,
         category: Category_Enum.INCOME,
-        accountId: "account1",
+        referenceAccountId: "account1",
         currency: "NOK",
         year: 2022,
       });
@@ -180,46 +184,14 @@ describe("Utils", () => {
     it("should handle empty data array", () => {
       const result = mapRowWithCategory(
         [],
-        mockTitleRecords,
-        "account1",
+        mockPreMappedTitles,
+        mockReferenceAccountMapping,
         "NOK"
       );
       expect(result).toEqual([]);
     });
   });
 
-  describe("updatePreMappedTitles", () => {
-    const mockTitleRecords: TitleRecords[] = [
-      { title: "Card Top-Up", category: Category_Enum.INCOME, count: 1 },
-      { title: "REMA 1000", category: Category_Enum.GROCERIES, count: 1 },
-      { title: "Netflix", category: Category_Enum.ENTERTAINMENT, count: 1 },
-    ];
-
-    it("should convert TitleRecords to PreMappedTitles format", () => {
-      const expected: PreMappedTitles = {
-        "Card Top-Up": Category_Enum.INCOME,
-        "REMA 1000": Category_Enum.GROCERIES,
-        Netflix: Category_Enum.ENTERTAINMENT,
-      };
-
-      const result = updatePreMappedTitles(mockTitleRecords);
-      expect(result).toEqual(expected);
-    });
-
-    it("should handle empty title records", () => {
-      const result = updatePreMappedTitles([]);
-      expect(result).toEqual({});
-    });
-
-    it("should exclude count property in result", () => {
-      const result = updatePreMappedTitles(mockTitleRecords);
-
-      Object.values(result).forEach((value) => {
-        expect(typeof value).toBe("string");
-        expect(value).not.toHaveProperty("count");
-      });
-    });
-  });
   describe("parseAmount", () => {
     const testCases = [
       { input: "123.00", expected: 123 },
@@ -243,38 +215,82 @@ describe("Utils", () => {
 
     testCases.forEach(({ input, expected }) => {
       it(`should correctly parse "${input}" to ${expected}`, () => {
-        const result = parseAmount(input);
-        expect(result).toBe(expected);
+        expect(parseAmount(input)).toBe(expected);
       });
     });
   });
 
   describe("groupTransactionsByYear", () => {
-    it("should group transactions by year - Format YYYY-MM-DD", () => {
-      const transactions = [
-        { date: "2022-01-01", amount: 100, title: "Test1" },
-        { date: "2022-02-01", amount: 200, title: "Test2" },
-        { date: "2023-01-01", amount: 300, title: "Test3" },
-      ] as unknown as Transaction[];
+    const mockTransactions: Transaction[] = [
+      {
+        id: "1",
+        accountId: "account1",
+        year: 2022,
+        title: "Transaction 1",
+        amount: 100,
+        currency: "NOK",
+        date: new Date("2022-01-01"),
+        category: Category_Enum.GROCERIES,
+        note: "Test transaction 1",
+        exchangeRate: 1,
+      },
+      {
+        id: "2",
+        accountId: "account1",
+        year: 2023,
+        title: "Transaction 2",
+        amount: 200,
+        currency: "NOK",
+        date: new Date("2023-01-01"),
+        category: Category_Enum.EXTRAS,
+        note: "Test transaction 2",
+        exchangeRate: 1,
+      },
+      {
+        id: "3",
+        accountId: "account1",
+        year: 2022,
+        title: "Transaction 3",
+        amount: 300,
+        currency: "NOK",
+        date: new Date("2022-02-01"),
+        category: Category_Enum.SHOPPING,
+        note: "Test transaction 3",
+        exchangeRate: 1,
+      },
+      {
+        id: "4",
+        accountId: "account1",
+        year: 2023,
+        title: "Investment Transaction",
+        amount: 1000,
+        currency: "NOK",
+        date: new Date("2023-03-01"),
+        category: Category_Enum.INVESTMENT,
+        note: "Test investment transaction",
+        exchangeRate: 1,
+      },
+    ];
 
-      const result = groupTransactionsByYear(transactions);
-      expect(Object.keys(result)).toEqual(["2022", "2023"]);
-      expect(result[2022].length).toBe(2);
-      expect(result[2023].length).toBe(1);
+    it("should group transactions by year correctly", () => {
+      const result = groupTransactionsByYear(mockTransactions);
+
+      expect(result).toHaveProperty("2022");
+      expect(result).toHaveProperty("2023");
+      expect(result[2022]).toHaveLength(2);
+      expect(result[2023]).toHaveLength(2);
     });
 
-    it("should group transactions by year - Format DD.MM.YYYY", () => {
-      const transactions = [
-        { date: "27.12.2024", amount: 100, title: "Test1" },
-        { date: "30.01.2023", amount: 200, title: "Test2" },
-        { date: "15.12.2022", amount: 300, title: "Test3" },
-      ] as unknown as Transaction[];
+    it("should handle transactions with invalid dates", () => {
+      const transactionsWithInvalidDate = [
+        {
+          ...mockTransactions[0],
+          date: new Date("invalid-date"),
+        },
+      ];
 
-      const result = groupTransactionsByYear(transactions);
-      expect(Object.keys(result)).toEqual(["2022", "2023", "2024"]);
-      expect(result[2022].length).toBe(1);
-      expect(result[2023].length).toBe(1);
-      expect(result[2024].length).toBe(1);
+      const result = groupTransactionsByYear(transactionsWithInvalidDate);
+      expect(result).toEqual({});
     });
   });
 });

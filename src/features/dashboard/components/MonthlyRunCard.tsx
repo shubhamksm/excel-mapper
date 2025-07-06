@@ -12,10 +12,23 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Bar, CartesianGrid, XAxis, YAxis } from "recharts";
-import { BarChart } from "recharts";
+import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart } from "recharts";
 import { compareAsc } from "date-fns";
 import { formatCurrency } from "@/utils";
+
+// Color palette for different categories
+const categoryColors: Record<Category_Enum, string> = {
+  [Category_Enum.GROCERIES]: "#8884d8",
+  [Category_Enum.SHOPPING]: "#ff7300",
+  [Category_Enum.BILLS_AND_FEES]: "#ff8042",
+  [Category_Enum.TRAVEL]: "#00c49f",
+  [Category_Enum.INCOME]: "#ff6b6b",
+  [Category_Enum.BALANCE_CORRECTION]: "#4ecdc4",
+  [Category_Enum.HEALTH]: "#ff6b6b",
+  [Category_Enum.DINING]: "#4ecdc4",
+  [Category_Enum.EXTRAS]: "#45b7d1",
+  [Category_Enum.INVESTMENT]: "#9b59b6",
+};
 
 const chartConfig = {
   month: {
@@ -31,33 +44,53 @@ export const MonthlyRunCard = () => {
   const transactions = useLiveQuery(() => db.transactions.toArray());
   const [selectedCurrency, setSelectedCurrency] = useState<string | null>(null);
 
-  const monthlyAverage = useMemo(() => {
-    return transactions
-      ?.filter(
-        (transaction) =>
-          transaction.amount < 0 &&
-          transaction.category !== Category_Enum.BALANCE_CORRECTION &&
-          transaction.currency === selectedCurrency
-      )
-      .reduce((acc, transaction) => {
-        const date = new Date(transaction.date);
-        const year = date.getFullYear();
-        const month = date.toLocaleString("default", { month: "short" });
-        const key = `${year}-${month}`;
-        const amount = transaction.amount;
-        acc[key] = (acc[key] || 0) + amount;
-        return acc;
-      }, {} as Record<string, number>);
+  const monthlyData = useMemo(() => {
+    if (!transactions || !selectedCurrency) return [];
+
+    // Filter transactions
+    const filteredTransactions = transactions.filter(
+      (transaction) =>
+        transaction.amount < 0 &&
+        transaction.category !== Category_Enum.BALANCE_CORRECTION &&
+        transaction.category !== Category_Enum.INCOME &&
+        transaction.currency === selectedCurrency
+    );
+
+    // Group by month and category
+    const groupedData = filteredTransactions.reduce((acc, transaction) => {
+      const date = new Date(transaction.date);
+      const year = date.getFullYear();
+      const month = date.toLocaleString("default", { month: "short" });
+      const key = `${year}-${month}`;
+      const category = transaction.category;
+      const amount = Math.abs(transaction.amount);
+
+      if (!acc[key]) {
+        acc[key] = { month: key };
+      }
+
+      acc[key][category] = (acc[key][category] || 0) + amount;
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Convert to array and sort by date
+    return Object.values(groupedData).sort((a, b) =>
+      compareAsc(new Date(a.month), new Date(b.month))
+    );
   }, [selectedCurrency, transactions]);
 
-  const chartData = useMemo(
-    () =>
-      Object.entries(monthlyAverage || {}).map(([key, amount]) => ({
-        month: key,
-        amount: Math.abs(amount),
-      })),
-    [monthlyAverage]
-  ).sort((a, b) => compareAsc(new Date(a.month), new Date(b.month)));
+  // Get unique categories for legend
+  const categories = useMemo(() => {
+    const categorySet = new Set<string>();
+    monthlyData.forEach((data) => {
+      Object.keys(data).forEach((key) => {
+        if (key !== "month" && data[key] > 0) {
+          categorySet.add(key);
+        }
+      });
+    });
+    return Array.from(categorySet);
+  }, [monthlyData]);
 
   return (
     <div className="col-span-4">
@@ -85,7 +118,7 @@ export const MonthlyRunCard = () => {
               config={chartConfig}
               className="min-h-[200px] w-full"
             >
-              <BarChart data={chartData} accessibilityLayer>
+              <BarChart data={monthlyData} accessibilityLayer>
                 <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey="month"
@@ -94,7 +127,6 @@ export const MonthlyRunCard = () => {
                   axisLine={false}
                 />
                 <YAxis
-                  dataKey="amount"
                   tickFormatter={(value) =>
                     formatCurrency(selectedCurrency, value)
                   }
@@ -103,13 +135,25 @@ export const MonthlyRunCard = () => {
                   cursor={{ fill: "var(--chart-2)", opacity: 0.75 }}
                   content={
                     <ChartTooltipContent
-                      formatter={(value) =>
-                        formatCurrency(selectedCurrency, Number(value))
+                      formatter={(value, name) =>
+                        `${name}: ${formatCurrency(
+                          selectedCurrency,
+                          Number(value)
+                        )}`
                       }
                     />
                   }
                 />
-                <Bar dataKey="amount" fill={`var(--chart-1)`} />
+                <Legend />
+                {categories.map((category) => (
+                  <Bar
+                    key={category}
+                    dataKey={category}
+                    stackId="a"
+                    fill={categoryColors[category as Category_Enum]}
+                    name={category}
+                  />
+                ))}
               </BarChart>
             </ChartContainer>
           )}
