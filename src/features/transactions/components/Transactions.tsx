@@ -2,7 +2,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/database";
 import { DataTable } from "@/containers/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import { Transaction, Category_Type } from "@/types";
+import { Transaction, Category_Type, Account } from "@/types";
 import { formatCurrency, toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,10 +37,20 @@ import { useState, useMemo } from "react";
 import { transactionProcessor } from "@/utils/processTransactions";
 import { CATEGORY_LIST } from "@/constants";
 import { ExcelImportModal } from "@/features/import/components/ExcelImportModal";
-import { ArrowUpDown, Search, Edit } from "lucide-react";
+import { ArrowUpDown, Edit } from "lucide-react";
 import { CategoryChangeDialog } from "./CategoryChangeDialog";
+import { TransactionFilters } from "./filters/TransactionFilters";
+import { useTransactionFilters } from "../hooks/useTransactionFilters";
+import { filterTransactions, getFilterSummary } from "../utils/filterUtils";
 
-const columns: ColumnDef<Transaction>[] = [
+// Define columns factory function to access accounts data
+const createColumns = (
+  accounts: Account[] = [],
+  setCategoryChangeDialog?: (dialog: {
+    open: boolean;
+    transaction: Transaction | null;
+  }) => void
+): ColumnDef<Transaction>[] => [
   {
     header: ({ column }) => {
       return (
@@ -77,6 +87,28 @@ const columns: ColumnDef<Transaction>[] = [
       formatCurrency(row.original.currency, row.original.amount),
   },
   {
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Account
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    accessorKey: "accountId",
+    cell: ({ row }) => {
+      const account = accounts.find((acc) => acc.id === row.original.accountId);
+      return (
+        <span className="font-medium">
+          {account?.name || "Unknown Account"}
+        </span>
+      );
+    },
+  },
+  {
     header: "Category",
     accessorKey: "category",
     cell: ({ row }) => (
@@ -88,7 +120,10 @@ const columns: ColumnDef<Transaction>[] = [
           className="h-6 w-6 p-0"
           onClick={(e) => {
             e.stopPropagation();
-            // This will be handled by the parent component
+            setCategoryChangeDialog?.({
+              open: true,
+              transaction: row.original,
+            });
           }}
         >
           <Edit className="h-3 w-3" />
@@ -117,11 +152,13 @@ export const Transactions = () => {
   const transactions = useLiveQuery(() => db.transactions.toArray());
   const accounts = useLiveQuery(() => db.accounts.toArray());
   const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [categoryChangeDialog, setCategoryChangeDialog] = useState<{
     open: boolean;
     transaction: Transaction | null;
   }>({ open: false, transaction: null });
+
+  const filterState = useTransactionFilters();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -135,47 +172,21 @@ export const Transactions = () => {
     },
   });
 
-  // Filter transactions based on search query
+  // Filter transactions using the new filter system
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
+    return filterTransactions(transactions, filterState);
+  }, [transactions, filterState]);
 
-    if (!searchQuery.trim()) return transactions;
+  // Get the primary currency from accounts (for display purposes)
+  const primaryCurrency = useMemo(() => {
+    return accounts?.[0]?.currency || "NOK";
+  }, [accounts]);
 
-    return transactions.filter((transaction) =>
-      transaction.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [transactions, searchQuery]);
-
-  // Create enhanced columns with category change functionality
-  const enhancedColumns = useMemo(() => {
-    return columns.map((column) => {
-      if ("accessorKey" in column && column.accessorKey === "category") {
-        return {
-          ...column,
-          cell: ({ row }: { row: any }) => (
-            <div className="flex items-center gap-2">
-              <span>{toTitleCase(row.original.category)}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCategoryChangeDialog({
-                    open: true,
-                    transaction: row.original,
-                  });
-                }}
-              >
-                <Edit className="h-3 w-3" />
-              </Button>
-            </div>
-          ),
-        };
-      }
-      return column;
-    });
-  }, []);
+  // Create columns with account data and category change functionality
+  const tableColumns = useMemo(() => {
+    return createColumns(accounts || [], setCategoryChangeDialog);
+  }, [accounts, setCategoryChangeDialog]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await transactionProcessor.processAndSaveTransactions(values.accountId, [
@@ -199,20 +210,17 @@ export const Transactions = () => {
 
   return (
     <div className="flex flex-col gap-y-4">
-      <div className="flex justify-between items-center gap-x-2">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search transactions by title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
-        </div>
+      {/* Filter Controls */}
+      <TransactionFilters
+        filterState={filterState}
+        currency={primaryCurrency}
+        isCollapsed={isFiltersCollapsed}
+        onToggleCollapse={setIsFiltersCollapsed}
+      />
 
+      <div className="flex justify-between items-center gap-x-2">
         {/* Action Buttons */}
-        <div className="flex gap-x-2">
+        <div className="flex gap-x-2 ml-auto">
           <ExcelImportModal />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -376,16 +384,18 @@ export const Transactions = () => {
         </div>
       </div>
 
-      {/* Search Results Info */}
-      {searchQuery && (
+      {/* Filter Results Info */}
+      {filterState.hasActiveFilters && (
         <div className="text-sm text-muted-foreground">
-          Showing {filteredTransactions.length} of {transactions?.length || 0}{" "}
-          transactions
-          {searchQuery && ` matching "${searchQuery}"`}
+          {getFilterSummary(
+            filterState,
+            transactions?.length || 0,
+            filteredTransactions.length
+          )}
         </div>
       )}
 
-      <DataTable columns={enhancedColumns} data={filteredTransactions || []} />
+      <DataTable columns={tableColumns} data={filteredTransactions || []} />
 
       {/* Category Change Dialog */}
       <CategoryChangeDialog
