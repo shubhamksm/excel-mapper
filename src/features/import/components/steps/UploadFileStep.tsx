@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { Generic_CSV_Data } from "@/types";
 import Papa from "papaparse";
 import { ModalFooter } from "../ModalFooter";
+import { AccountLatestTransactionInfo } from "../AccountLatestTransactionInfo";
 
 export const UploadFileStep = () => {
   const [rawFile, setRawFile] = useBoundStore(
@@ -46,6 +47,8 @@ export const UploadFileStep = () => {
   return (
     <>
       <div className="space-y-4 h-full flex-1 overflow-y-auto w-full">
+        <AccountLatestTransactionInfo className="mb-4" />
+
         <p className="text-sm text-muted-foreground text-center">
           Upload your CSV or Excel file to get started.
         </p>
