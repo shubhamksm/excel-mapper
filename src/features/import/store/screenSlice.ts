@@ -6,6 +6,7 @@ export interface ScreenSlice {
   changeCurrentScreen: (value: ExcelMappingScreens) => void;
   setOpen: (value: boolean) => void;
   open: boolean;
+  resetScreenState: () => void;
 }
 
 export const createScreenSlice: StateCreator<ScreenSlice> = (set) => ({
@@ -14,4 +15,8 @@ export const createScreenSlice: StateCreator<ScreenSlice> = (set) => ({
     set(() => ({ currentScreen: value })),
   setOpen: (value: boolean) => set(() => ({ open: value })),
   open: false,
+  resetScreenState: () =>
+    set(() => ({
+      currentScreen: ExcelMappingScreens.UPLOAD_FILE,
+    })),
 });

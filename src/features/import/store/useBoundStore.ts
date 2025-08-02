@@ -13,11 +13,20 @@ import {
 export type StoreState = ScreenSlice &
   FileUploadSlice &
   HeaderMappingSlice &
-  TitleMappingSlice;
+  TitleMappingSlice & {
+    resetAllImportState: () => void;
+  };
 
-export const useBoundStore = create<StoreState>()((...a) => ({
-  ...createScreenSlice(...a),
-  ...createFileUploadSlice(...a),
-  ...createHeaderMappingSlice(...a),
-  ...createTitleMappingSlice(...a),
+export const useBoundStore = create<StoreState>()((set, get, api) => ({
+  ...createScreenSlice(set, get, api),
+  ...createFileUploadSlice(set, get, api),
+  ...createHeaderMappingSlice(set, get, api),
+  ...createTitleMappingSlice(set, get, api),
+  resetAllImportState: () => {
+    const state = get();
+    state.resetScreenState();
+    state.resetFileUploadState();
+    state.resetHeaderMappingState();
+    state.resetTitleMappingState();
+  },
 }));

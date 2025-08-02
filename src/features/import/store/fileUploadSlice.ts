@@ -6,6 +6,7 @@ export interface FileUploadSlice {
   parsedFile: Generic_CSV_Data | undefined;
   setRawFile: (file: File | undefined) => void;
   setParsedFile: (file: Generic_CSV_Data) => void;
+  resetFileUploadState: () => void;
 }
 
 export const createFileUploadSlice: StateCreator<FileUploadSlice> = (set) => ({
@@ -13,4 +14,9 @@ export const createFileUploadSlice: StateCreator<FileUploadSlice> = (set) => ({
   parsedFile: undefined,
   setRawFile: (file: File | undefined) => set(() => ({ rawFile: file })),
   setParsedFile: (file: Generic_CSV_Data) => set(() => ({ parsedFile: file })),
+  resetFileUploadState: () =>
+    set(() => ({
+      rawFile: undefined,
+      parsedFile: undefined,
+    })),
 });
